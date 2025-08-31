@@ -1,0 +1,26 @@
+---
+title: "My Data Science Portfolio"
+---
+
+## Welcome
+
+Hello! My name is Matthew Rivera, and I am a Master's student at Baruch College specializing in Data Science and Analytics. I enjoy transforming complex data sets into actionable insights and building reproducible workflows.
+
+Check out my [About Me](about.qmd) page to learn more about my experiences.
+
+## Baruch Map
+
+```{r}
+#| echo: false
+if(!require("leaflet")) install.packages("leaflet")
+library(leaflet)
+
+baruch_longitude <- -73.98333
+baruch_latitude  <- 40.75028
+
+leaflet() |>
+  addTiles() |>
+  setView(baruch_longitude, baruch_latitude, zoom=17) |>
+  addPopups(baruch_longitude, baruch_latitude, 
+            "I am a Master's student at <b>Baruch College</b>!")
+```

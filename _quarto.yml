@@ -1,0 +1,26 @@
+project:
+  type: website
+  output-dir: docs
+
+website:
+  title: "STA 9750 Portfolio"
+  description: "Course Projects for STA 9750 at Baruch College"
+  site-url: "https://riveramatthew.github.io/STA9750-2025-FALL/"
+  navbar:
+    background: primary
+    search: false
+    right:
+      - text: "Home"
+        href: index.qmd
+      - text: "About"
+        href: about.qmd
+      - text: "Projects"
+        href: projects.qmd  # corrected spelling
+
+format:
+  html:
+    theme: sandstone
+    toc: false
+
+editor:
+  mode: source
