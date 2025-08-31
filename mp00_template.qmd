@@ -1,0 +1,15 @@
+---
+title: "Mini-Project 00 — Setup (Template)"
+format: html
+---
+
+## Overview
+
+Short description of the mini-project.
+
+## R session info
+
+```{r}
+#| echo: true
+sessionInfo()
+```

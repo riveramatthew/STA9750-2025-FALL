@@ -6,7 +6,8 @@ title: "Completed Projects"
 
 Below is a summary of the mini-projects completed for STA 9750:
 
-1. [Mini-Project 01](mp01.qmd)
+0. [Mini-Project 00](mp00_template.qmd)
+2. [Mini-Project 01](mp01.qmd)
 2. [Mini-Project 02](mp02.qmd)
 3. [Mini-Project 03](mp03.qmd)
 4. [Mini-Project 04](mp04.qmd)
