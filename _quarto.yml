@@ -15,7 +15,18 @@ website:
       - text: "About"
         href: about.qmd
       - text: "Projects"
-        href: projects.qmd  # corrected spelling
+        href: projects.qmd
+        menu:
+        - text: "Mini-Project 00"
+          href: mp00.qmd
+        - text: "Mini-Project 01"
+          href: mp01.qmd
+        - text: "Mini-Project 02"          
+          href: mp02.qmd
+        - text: "Mini-Project 03"
+          href: mp03.qmd
+        - text: "Mini-Project 04"
+          href: mp04.qmd
 
 format:
   html:

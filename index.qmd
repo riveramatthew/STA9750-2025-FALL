@@ -11,7 +11,7 @@ You can find mini-projects in the **mini-projects/** folder. Each mini-project w
 Check out my [About Me](about.qmd) page to learn more about my experiences.
 
 ### Quick Links
-- [Mini-Project 00](projects/mp00_template.qmd) 
+- [Mini-Project 00](mp00.qmd) 
 - [Mini-Project 01](mp01.qmd)
 
 ## Baruch Map
