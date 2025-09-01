@@ -12,12 +12,33 @@ Below is a summary of the mini-projects completed for STA 9750:
 3. [Mini-Project 03](mp03.qmd)
 4. [Mini-Project 04](mp04.qmd)
 
-# Overview
+# STA9750 Mini-Projects Overview
 
-This page will eventually include:
+This page contains links and descriptions for each mini-project completed during the course.
 
-- Short descriptions of each mini-project  
-- Links to visualizations and dashboards  
-- Downloadable datasets or reports if appropriate  
+---
 
-You can add additional sections or markdown content as you complete each mini-project.
+## Mini-Project 00: Template Setup
+- **Description:** Starter template for all future mini-projects, including standard folder structure and HTML template.
+- **Visualization/Dashboard:** [Link to template HTML](mp00.html)
+- **Downloadable Dataset/Report:** N/A
+
+---
+
+## Mini-Project 01: [Project Name]
+- **Description:** Brief description of what the project does.
+- **Visualization/Dashboard:** [Link to template HTML](mp01.html)
+- **Downloadable Dataset/Report:** [Link to dataset/report]
+
+---
+
+## Mini-Project 02: [Project Name]
+- **Description:** ...
+- **Visualization/Dashboard:** ...
+- **Downloadable Dataset/Report:** ...
+
+---
+
+### Notes
+- You can expand this page as new mini-projects are completed.
+- Include screenshots or embedded plots for dashboards if desired.
