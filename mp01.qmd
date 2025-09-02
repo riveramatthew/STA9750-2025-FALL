@@ -2,41 +2,34 @@
 title: "Mini-Project 01 – Netflix Top 10 EDA"
 author: "Matthew Rivera"
 format: html
-editor: visual
-execute:
-  echo: true
-  warning: false
-  message: false
 ---
 
-# Executive Summary
+## Executive Summary
 
-Netflix continues to dominate the global streaming market with its diverse portfolio of original content. Through analysis of Netflix's public Top 10 data, this report identifies key successes and growth opportunities across different markets and content categories. Our findings highlight the remarkable global reach of shows like Stranger Things, the growing importance of regional content in markets like India, and emerging trends in international programming preferences.
+This report analyzes Netflix's Top 10 global and country-specific viewing data to identify successful "gourmet cheeseburgers" - high-quality content that appeals to mass audiences worldwide. Our analysis reveals compelling insights about Netflix's global reach, content performance, and regional preferences that support strategic press releases highlighting the platform's continued success.
 
-# Data Acquisition and Preparation
+Key findings include Netflix's operation across **`r length(unique(COUNTRY_TOP_10$country_name))`** countries, with standout performers like *Squid Game* achieving unprecedented global viewership and *Stranger Things* maintaining consistent international appeal across multiple seasons.
 
-## Task 1: Data Acquisition
+## Introduction
 
-``` r
-#| message: false
-#| warning: false
+As Netflix continues its mission to create compelling original content with global appeal, understanding viewing patterns across different markets becomes crucial for strategic communication. This analysis examines Netflix's public Top 10 data to quantify recent successes and identify trends that demonstrate the platform's ability to produce content that resonates with diverse, international audiences.
 
-# Load required libraries
-if(!require("tidyverse")) install.packages("tidyverse")
-if(!require("DT")) install.packages("DT")
-if(!require("lubridate")) install.packages("lubridate")
+Our analysis focuses on three key areas: global content performance, regional market penetration (particularly in high-growth markets like India), and cross-cultural content success stories that exemplify Netflix's "gourmet cheeseburger" philosophy.
 
-library(tidyverse)
-library(DT)
-library(lubridate)
-library(stringr)
+## Data Acquisition and Preparation
 
-# Create data directory
+### Task 1: Data Acquisition
+
+```{r}
+#| label: data-acquisition
+#| code-summary: "Data Download and Setup"
+
+# Create data directory structure
 if(!dir.exists(file.path("data", "mp01"))){
     dir.create(file.path("data", "mp01"), showWarnings=FALSE, recursive=TRUE)
 }
 
-# Set file paths
+# Define file paths
 GLOBAL_TOP_10_FILENAME <- file.path("data", "mp01", "global_top10_alltime.csv")
 COUNTRY_TOP_10_FILENAME <- file.path("data", "mp01", "country_top10_alltime.csv")
 
@@ -46,367 +39,626 @@ if(!file.exists(GLOBAL_TOP_10_FILENAME)){
                   destfile=GLOBAL_TOP_10_FILENAME)
 }
 
-# Download country top 10 data
+# Download country-specific top 10 data
 if(!file.exists(COUNTRY_TOP_10_FILENAME)){
     download.file("https://www.netflix.com/tudum/top10/data/all-weeks-countries.tsv", 
                   destfile=COUNTRY_TOP_10_FILENAME)
 }
+
+cat("Data files successfully acquired!\n")
+cat("Global Top 10 file size:", file.size(GLOBAL_TOP_10_FILENAME), "bytes\n")
+cat("Country Top 10 file size:", file.size(COUNTRY_TOP_10_FILENAME), "bytes\n")
 ```
 
-## Task 2: Data Cleaning
+### Data Import and Initial Exploration
 
-``` r
-# Read and clean global data
+```{r}
+#| label: setup-libraries
+#| code-summary: "Load Required Libraries"
+
+# Load required libraries
+if(!require("tidyverse")) install.packages("tidyverse")
+if(!require("DT")) install.packages("DT")
+if(!require("lubridate")) install.packages("lubridate")
+if(!require("stringr")) install.packages("stringr")
+if(!require("knitr")) install.packages("knitr")
+
+library(readr)
+library(dplyr)
+library(DT)
+library(lubridate)
+library(stringr)
+library(ggplot2)
+library(knitr)
+
+# Read global data
 GLOBAL_TOP_10 <- read_tsv(GLOBAL_TOP_10_FILENAME, show_col_types = FALSE)
 
-# Fix N/A values in season_title
+# Display initial structure
+cat("Global Top 10 Data Structure:\n")
+cat("Rows:", nrow(GLOBAL_TOP_10), "Columns:", ncol(GLOBAL_TOP_10), "\n")
+```
+
+### Task 2: Data Cleaning - Global Dataset
+
+```{r}
+#| label: clean-global-data
+#| code-summary: "Clean Global Dataset"
+
+# Clean the global dataset - convert "N/A" strings to proper NA values
 GLOBAL_TOP_10 <- GLOBAL_TOP_10 |>
     mutate(season_title = if_else(season_title == "N/A", NA_character_, season_title))
 
-# Check the structure
+# Verify the cleaning worked
+na_count <- sum(is.na(GLOBAL_TOP_10$season_title))
+cat("Number of proper NA values in season_title:", na_count, "\n")
+
+# Display structure after cleaning
 glimpse(GLOBAL_TOP_10)
 ```
 
-## Task 3: Data Import with Proper NA Handling
+### Task 3: Data Import - Country Dataset
 
-``` r
+```{r}
+#| label: import-country-data
+#| code-summary: "Import and Clean Country Dataset"
+
 # Read country data with proper NA handling
 COUNTRY_TOP_10 <- read_tsv(COUNTRY_TOP_10_FILENAME, 
-                          na = c("", "NA", "N/A"), 
-                          show_col_types = FALSE)
+                           na = c("", "NA", "N/A"),
+                           show_col_types = FALSE)
 
-# Check the structure
+# Display structure
+cat("Country Top 10 Data Structure:\n")
+cat("Rows:", nrow(COUNTRY_TOP_10), "Columns:", ncol(COUNTRY_TOP_10), "\n")
 glimpse(COUNTRY_TOP_10)
 ```
 
-## Data Formatting Functions
+### Data Presentation Functions
 
-``` r
-# Function to format column titles
+```{r}
+#| label: formatting-functions
+#| code-summary: "Create Data Presentation Functions"
+
+# Function to format column names for presentation
 format_titles <- function(df){
     colnames(df) <- str_replace_all(colnames(df), "_", " ") |> str_to_title()
     df
 }
 
-# Function to create publication-ready tables
-create_pub_table <- function(df, n_rows = 20) {
-    df |>
-        head(n = n_rows) |>
-        datatable(options = list(searching = FALSE, info = FALSE, pageLength = 10)) |>
-        formatRound(c('Weekly Hours Viewed', 'Weekly Views'), digits = 0)
+# Function to create publication-quality tables
+create_pub_table <- function(df, caption = NULL, page_length = 10) {
+    formatted_df <- df |>
+        format_titles()
+    
+    dt_table <- formatted_df |>
+        datatable(
+            caption = caption,
+            options = list(
+                pageLength = page_length,
+                searching = TRUE,
+                info = TRUE,
+                scrollX = TRUE
+            ),
+            class = 'cell-border stripe'
+        )
+    
+    # Format numeric columns if they exist
+    numeric_cols <- names(formatted_df)[sapply(formatted_df, is.numeric)]
+    large_number_cols <- numeric_cols[grepl("Hours Viewed|Views|Weekly", numeric_cols)]
+    
+    if(length(large_number_cols) > 0) {
+        dt_table <- dt_table |> 
+            formatRound(large_number_cols, digits = 0)
+    }
+    
+    return(dt_table)
 }
 ```
 
-# Exploratory Data Analysis
+### Sample Data Preview
 
-## Task 4: Exploratory Questions
+```{r}
+#| label: data-preview
+#| code-summary: "Preview Cleaned Data"
+
+# Show a sample of the global data with improved formatting
+GLOBAL_TOP_10 |> 
+    mutate(`Runtime (Minutes)` = round(60 * runtime)) |>
+    select(-season_title, -runtime) |>
+    head(n=15) |>
+    create_pub_table(caption = "Sample of Netflix Global Top 10 Data (Latest Week)")
+```
+
+## Task 4: Exploratory Data Analysis
 
 ### Question 1: Netflix's Global Reach
 
-``` r
-num_countries <- COUNTRY_TOP_10 |>
-    distinct(country_name) |>
-    nrow()
+```{r}
+#| label: countries-count
+#| code-summary: "Count Unique Countries"
+
+countries_count <- COUNTRY_TOP_10 |>
+    summarise(unique_countries = n_distinct(country_name)) |>
+    pull(unique_countries)
+
+cat("Netflix operates in", countries_count, "different countries based on viewing history data.\n")
 ```
 
-Netflix operates in `r num_countries` different countries based on the viewing history data available.
+Netflix operates in **`r countries_count`** different countries, demonstrating its truly global reach and the platform's success in penetrating diverse international markets.
 
-### Question 2: Most Popular Non-English Film
+### Question 2: Top Non-English Film by Weeks in Top 10
 
-``` r
-top_non_english_film <- GLOBAL_TOP_10 |>
+```{r}
+#| label: non-english-film
+#| code-summary: "Find Top Non-English Film"
+
+top_non_english <- GLOBAL_TOP_10 |>
     filter(category == "Films (Non-English)") |>
     group_by(show_title) |>
-    summarise(total_weeks = sum(cumulative_weeks_in_top_10), .groups = 'drop') |>
-    arrange(desc(total_weeks)) |>
+    summarise(
+        total_weeks = sum(cumulative_weeks_in_top_10),
+        max_weeks = max(cumulative_weeks_in_top_10),
+        .groups = 'drop'
+    ) |>
+    arrange(desc(max_weeks)) |>
     slice(1)
 
-top_non_english_film |>
-    format_titles() |>
-    datatable(options = list(searching = FALSE, info = FALSE, dom = 't'))
+cat("Top non-English film:", top_non_english$show_title, "\n")
+cat("Weeks in top 10:", top_non_english$max_weeks, "\n")
 ```
 
-The non-English-language film **`r top_non_english_film$show_title`** has spent the most cumulative weeks in the global top 10, with a total of `r top_non_english_film$total_weeks` weeks.
+The non-English-language film that has spent the most cumulative weeks in the global top 10 is **`r top_non_english$show_title`**, which spent **`r top_non_english$max_weeks`** weeks in the top 10.
 
-### Question 3: Longest Film in Netflix Top 10
+### Question 3: Longest Film in Global Top 10
 
-``` r
+```{r}
+#| label: longest-film
+#| code-summary: "Find Longest Film"
+
 longest_film <- GLOBAL_TOP_10 |>
     filter(str_detect(category, "Films")) |>
     filter(!is.na(runtime)) |>
     arrange(desc(runtime)) |>
     slice(1) |>
-    mutate(runtime_minutes = round(runtime * 60))
+    mutate(runtime_minutes = round(60 * runtime))
 
-longest_film |>
-    select(show_title, category, runtime, runtime_minutes, week) |>
-    format_titles() |>
-    datatable(options = list(searching = FALSE, info = FALSE, dom = 't'))
+cat("Longest film:", longest_film$show_title, "\n")
+cat("Runtime:", longest_film$runtime_minutes, "minutes\n")
+cat("Category:", longest_film$category, "\n")
 ```
 
-The longest film to appear in the Netflix global Top 10 is **`r longest_film$show_title`** at `r longest_film$runtime_minutes` minutes (`r round(longest_film$runtime, 2)` hours).
+The longest film to ever appear in the Netflix global Top 10 is **`r longest_film$show_title`** at **`r longest_film$runtime_minutes`** minutes (`r longest_film$category`).
 
-### Question 4: Programs with Most Total Hours by Category
+### Question 4: Top Programs by Category
 
-``` r
+```{r}
+#| label: top-by-category
+#| code-summary: "Find Top Program in Each Category"
+
 top_by_category <- GLOBAL_TOP_10 |>
     group_by(category, show_title) |>
-    summarise(total_hours = sum(weekly_hours_viewed, na.rm = TRUE), .groups = 'drop') |>
+    summarise(
+        total_hours = sum(weekly_hours_viewed, na.rm = TRUE),
+        .groups = 'drop'
+    ) |>
     group_by(category) |>
-    slice_max(total_hours, n = 1) |>
-    arrange(desc(total_hours))
+    arrange(desc(total_hours)) |>
+    slice(1) |>
+    ungroup()
 
 top_by_category |>
-    format_titles() |>
-    datatable(options = list(searching = FALSE, info = FALSE)) |>
-    formatRound('Total Hours', digits = 0)
+    mutate(
+        `Total Hours (Millions)` = round(total_hours / 1e6, 1),
+        Category = category,
+        `Show Title` = show_title
+    ) |>
+    select(Category, `Show Title`, `Total Hours (Millions)`) |>
+    create_pub_table(caption = "Top Program by Total Viewership Hours in Each Category")
 ```
 
-### Question 5: TV Show with Longest Country Run
+### Question 5: Longest TV Show Run by Country
 
-``` r
-longest_country_run <- COUNTRY_TOP_10 |>
+```{r}
+#| label: longest-tv-run
+#| code-summary: "Find Longest TV Show Run"
+
+longest_run <- COUNTRY_TOP_10 |>
     filter(str_detect(category, "TV")) |>
     group_by(country_name, show_title, season_title) |>
-    summarise(max_weeks = max(cumulative_weeks_in_top_10, na.rm = TRUE), .groups = 'drop') |>
+    summarise(
+        max_weeks = max(cumulative_weeks_in_top_10, na.rm = TRUE),
+        .groups = 'drop'
+    ) |>
     arrange(desc(max_weeks)) |>
     slice(1)
 
-longest_country_run |>
-    format_titles() |>
-    datatable(options = list(searching = FALSE, info = FALSE, dom = 't'))
+cat("Longest TV show run:", longest_run$show_title, "\n")
+cat("Season:", ifelse(is.na(longest_run$season_title), "Not specified", longest_run$season_title), "\n")
+cat("Duration:", longest_run$max_weeks, "weeks\n")
+cat("Country:", longest_run$country_name, "\n")
 ```
 
-The TV show with the longest run in a country's Top 10 is **`r longest_country_run$show_title`** (`r ifelse(is.na(longest_country_run$season_title), "", paste("Season:", longest_country_run$season_title))`) with `r longest_country_run$max_weeks` weeks in `r longest_country_run$country_name`.
+The TV show with the longest run in a country's Top 10 is **`r longest_run$show_title`** which ran for **`r longest_run$max_weeks`** weeks in **`r longest_run$country_name`**.
 
-### Question 6: Country with Limited History
+### Question 6: Country with Limited Service History
 
-``` r
+```{r}
+#| label: limited-service
+#| code-summary: "Find Country with Limited Service"
+
 country_weeks <- COUNTRY_TOP_10 |>
     group_by(country_name) |>
     summarise(
-        total_weeks = n_distinct(week),
-        last_week = max(week, na.rm = TRUE),
+        weeks_of_data = n_distinct(week),
+        earliest_date = min(week, na.rm = TRUE),
+        latest_date = max(week, na.rm = TRUE),
         .groups = 'drop'
     ) |>
-    arrange(total_weeks)
+    arrange(weeks_of_data)
 
-limited_country <- country_weeks |> slice(1)
+limited_country <- country_weeks |>
+    slice(1)
 
-limited_country |>
-    format_titles() |>
-    datatable(options = list(searching = FALSE, info = FALSE, dom = 't'))
+cat("Country with limited service:", limited_country$country_name, "\n")
+cat("Weeks of data:", limited_country$weeks_of_data, "\n")
+cat("Service ended:", limited_country$latest_date, "\n")
 ```
 
-**`r limited_country$country_name`** has the most limited history with only `r limited_country$total_weeks` weeks of data. Netflix appears to have ceased operations there on `r limited_country$last_week`.
+The country with limited service history is **`r limited_country$country_name`** with only **`r limited_country$weeks_of_data`** weeks of data. Netflix ceased operations there on **`r limited_country$latest_date`**.
 
 ### Question 7: Squid Game Total Viewership
 
-``` r
+```{r}
+#| label: squid-game-viewership
+#| code-summary: "Calculate Squid Game Total Viewership"
+
 squid_game_total <- GLOBAL_TOP_10 |>
     filter(str_detect(show_title, "Squid Game")) |>
-    summarise(total_hours = sum(weekly_hours_viewed, na.rm = TRUE)) |>
-    pull(total_hours)
+    group_by(show_title, season_title) |>
+    summarise(
+        total_hours = sum(weekly_hours_viewed, na.rm = TRUE),
+        .groups = 'drop'
+    ) |>
+    summarise(
+        grand_total_hours = sum(total_hours),
+        total_hours_billions = round(sum(total_hours) / 1e9, 2)
+    )
 
-squid_game_details <- GLOBAL_TOP_10 |>
+# Show breakdown by season
+squid_game_breakdown <- GLOBAL_TOP_10 |>
     filter(str_detect(show_title, "Squid Game")) |>
     group_by(show_title, season_title) |>
-    summarise(season_hours = sum(weekly_hours_viewed, na.rm = TRUE), .groups = 'drop') |>
-    arrange(desc(season_hours))
+    summarise(
+        total_hours = sum(weekly_hours_viewed, na.rm = TRUE),
+        hours_millions = round(total_hours / 1e6, 1),
+        .groups = 'drop'
+    )
 
-squid_game_details |>
-    format_titles() |>
-    datatable(options = list(searching = FALSE, info = FALSE)) |>
-    formatRound('Season Hours', digits = 0)
+squid_game_breakdown |>
+    mutate(
+        `Show Title` = show_title,
+        `Season` = ifelse(is.na(season_title), "Season 1", season_title),
+        `Hours Viewed (Millions)` = hours_millions
+    ) |>
+    select(`Show Title`, Season, `Hours Viewed (Millions)`) |>
+    create_pub_table(caption = "Squid Game Viewership by Season")
+
+cat("Total Squid Game viewership across all seasons:", 
+    format(squid_game_total$grand_total_hours, big.mark = ","), "hours\n")
+cat("That's approximately", squid_game_total$total_hours_billions, "billion hours!\n")
 ```
 
-The total viewership for all seasons of **Squid Game** is `r format(squid_game_total, big.mark = ",")` hours.
+The total viewership of *Squid Game* across all seasons is **`r format(squid_game_total$grand_total_hours, big.mark = ",")`** hours (approximately **`r squid_game_total$total_hours_billions` billion** hours).
 
 ### Question 8: Red Notice Views in 2021
 
-``` r
+```{r}
+#| label: red-notice-2021
+#| code-summary: "Calculate Red Notice Views in 2021"
+
 red_notice_2021 <- GLOBAL_TOP_10 |>
-    filter(show_title == "Red Notice", year(week) == 2021) |>
-    summarise(total_views = sum(weekly_views, na.rm = TRUE)) |>
-    pull(total_views)
-```
-
-**Red Notice** received approximately `r format(red_notice_2021, big.mark = ",")` views in 2021.
-
-### Question 9: US Films That Rose to Number 1
-
-``` r
-us_films_analysis <- COUNTRY_TOP_10 |>
-    filter(country_name == "United States", str_detect(category, "Films")) |>
-    group_by(show_title) |>
+    filter(show_title == "Red Notice" & year(week) == 2021) |>
     summarise(
-        min_rank = min(weekly_rank, na.rm = TRUE),
-        reached_number_1 = any(weekly_rank == 1, na.rm = TRUE),
-        first_week = min(week, na.rm = TRUE),
+        total_views = sum(weekly_views, na.rm = TRUE),
+        total_hours = sum(weekly_hours_viewed, na.rm = TRUE),
+        runtime_hours = 1 + 58/60,  # 1 hour 58 minutes
         .groups = 'drop'
     ) |>
-    filter(reached_number_1 == TRUE, min_rank > 1) |>
-    arrange(desc(first_week))
+    mutate(
+        views_millions = round(total_views / 1e6, 1),
+        # Cross-check calculation using hours viewed
+        calculated_views_from_hours = round(total_hours / runtime_hours / 1e6, 1)
+    )
 
-us_films_analysis |>
-    head(10) |>
-    format_titles() |>
-    datatable(options = list(searching = FALSE, info = FALSE)) 
-
-recent_riser <- us_films_analysis |> slice(1)
+cat("Red Notice views in 2021:", format(red_notice_2021$total_views, big.mark = ","), "\n")
+cat("That's approximately", red_notice_2021$views_millions, "million views\n")
 ```
 
-`r nrow(us_films_analysis)` films reached Number 1 in the US after debuting at a lower position. The most recent film to accomplish this was **`r recent_riser$show_title`** in `r year(recent_riser$first_week)`.
+*Red Notice* received approximately **`r format(red_notice_2021$total_views, big.mark = ",")`** views in 2021 (about **`r red_notice_2021$views_millions` million** views).
 
-### Question 10: TV Show Debut in Most Countries
+### Question 9: US Films That Climbed to #1
 
-``` r
-debut_week_analysis <- COUNTRY_TOP_10 |>
+```{r}
+#| label: climbing-films
+#| code-summary: "Find Films That Climbed to #1 in US"
+
+# Find films that hit #1 in US
+us_number_ones <- COUNTRY_TOP_10 |>
+    filter(country_name == "United States" & str_detect(category, "Films") & weekly_rank == 1) |>
+    distinct(show_title)
+
+# Find films that didn't debut at #1 but later reached #1
+climbing_films <- COUNTRY_TOP_10 |>
+    filter(country_name == "United States" & str_detect(category, "Films")) |>
+    filter(show_title %in% us_number_ones$show_title) |>
+    group_by(show_title) |>
+    arrange(week) |>
+    summarise(
+        first_rank = first(weekly_rank),
+        hit_number_1 = any(weekly_rank == 1),
+        latest_week = max(week),
+        .groups = 'drop'
+    ) |>
+    filter(first_rank > 1 & hit_number_1) |>
+    arrange(desc(latest_week))
+
+climbing_count <- nrow(climbing_films)
+most_recent <- climbing_films$show_title[1]
+most_recent_date <- climbing_films$latest_week[1]
+
+cat("Number of films that climbed to #1 in US:", climbing_count, "\n")
+cat("Most recent film:", most_recent, "\n")
+cat("Date:", most_recent_date, "\n")
+
+# Show top climbing films
+climbing_films |>
+    head(10) |>
+    mutate(
+        `Show Title` = show_title,
+        `First Rank` = first_rank,
+        `Hit #1` = hit_number_1,
+        `Latest Week` = latest_week
+    ) |>
+    select(`Show Title`, `First Rank`, `Latest Week`) |>
+    create_pub_table(caption = "Films That Climbed to #1 in US (Most Recent First)")
+```
+
+**`r climbing_count`** films reached Number 1 in the US after debuting at a lower position. The most recent film to accomplish this feat is **`r most_recent`** in **`r most_recent_date`**.
+
+### Question 10: TV Show with Most International Debut
+
+```{r}
+#| label: most-international-debut
+#| code-summary: "Find TV Show with Most International Debut"
+
+# Find TV shows/seasons and their debut week performance
+international_debuts <- COUNTRY_TOP_10 |>
     filter(str_detect(category, "TV")) |>
     group_by(show_title, season_title) |>
+    arrange(week) |>
+    slice(1) |>  # Get first appearance (debut week)
+    ungroup() |>
+    group_by(show_title, season_title, week) |>
     summarise(
-        debut_week = min(week, na.rm = TRUE),
-        countries_in_debut = n_distinct(country_name[week == min(week)]),
+        countries_charted = n_distinct(country_name),
         .groups = 'drop'
     ) |>
-    arrange(desc(countries_in_debut)) |>
+    arrange(desc(countries_charted)) |>
     slice(1)
 
-debut_week_analysis |>
-    format_titles() |>
-    datatable(options = list(searching = FALSE, info = FALSE, dom = 't'))
+top_debut_show <- international_debuts$show_title[1]
+top_debut_season <- international_debuts$season_title[1]
+top_debut_countries <- international_debuts$countries_charted[1]
+top_debut_week <- international_debuts$week[1]
+
+cat("TV show with most international debut:", top_debut_show, "\n")
+cat("Season:", ifelse(is.na(top_debut_season), "Not specified", top_debut_season), "\n")
+cat("Countries charted:", top_debut_countries, "\n")
+cat("Debut week:", top_debut_week, "\n")
 ```
 
-**`r debut_week_analysis$show_title`** (`r ifelse(is.na(debut_week_analysis$season_title), "", paste("Season:", debut_week_analysis$season_title))`) hit the top 10 in the most countries during its debut week, charting in `r debut_week_analysis$countries_in_debut` countries.
+The TV show/season that hit the top 10 in the most countries in its debut week is **`r top_debut_show`** `r ifelse(is.na(top_debut_season), "", paste("(", top_debut_season, ")"))`**, which charted in **`r top_debut_countries`** countries during its debut week of **`r top_debut_week`**.
 
-# Press Releases
+## Press Releases
 
-## Press Release 1: Stranger Things Season 5
+### Task 5: Stranger Things Press Release
 
-``` r
+```{r}
+#| label: stranger-things-analysis
+#| code-summary: "Analyze Stranger Things Performance"
+
+# Analyze Stranger Things across all seasons
 stranger_things_stats <- GLOBAL_TOP_10 |>
     filter(str_detect(show_title, "Stranger Things")) |>
+    group_by(season_title) |>
     summarise(
         total_hours = sum(weekly_hours_viewed, na.rm = TRUE),
-        total_weeks_top10 = sum(cumulative_weeks_in_top_10, na.rm = TRUE),
-        seasons = n_distinct(season_title, na.rm = TRUE)
+        max_weeks_top10 = max(cumulative_weeks_in_top_10, na.rm = TRUE),
+        .groups = 'drop'
+    ) |>
+    summarise(
+        total_viewership = sum(total_hours),
+        max_weeks_any_season = max(max_weeks_top10),
+        viewership_billions = round(sum(total_hours) / 1e9, 2)
     )
+
+# International appeal analysis
+stranger_things_countries <- COUNTRY_TOP_10 |>
+    filter(str_detect(show_title, "Stranger Things")) |>
+    summarise(countries_reached = n_distinct(country_name))
 
 # Compare to other English TV shows
 english_tv_comparison <- GLOBAL_TOP_10 |>
     filter(category == "TV (English)") |>
     group_by(show_title) |>
-    summarise(total_hours = sum(weekly_hours_viewed, na.rm = TRUE), .groups = 'drop') |>
+    summarise(
+        total_hours = sum(weekly_hours_viewed, na.rm = TRUE),
+        .groups = 'drop'
+    ) |>
     arrange(desc(total_hours)) |>
-    mutate(rank = row_number())
-
-stranger_things_rank <- english_tv_comparison |>
-    filter(str_detect(show_title, "Stranger Things")) |>
-    pull(rank)
-
-# International appeal
-stranger_things_countries <- COUNTRY_TOP_10 |>
-    filter(str_detect(show_title, "Stranger Things")) |>
-    summarise(countries_reached = n_distinct(country_name))
+    mutate(rank = row_number()) |>
+    filter(str_detect(show_title, "Stranger Things") | rank <= 5)
 ```
 
-### Netflix's "Stranger Things" Phenomenon Sets the Stage for Epic Series Finale
+---
 
-**PRESS RELEASE**
+## 🎬 PRESS RELEASE: STRANGER THINGS
 
-As Netflix prepares to release the fifth and final season of "Stranger Things" at the end of 2025, the streaming giant celebrates one of its most successful original series in history. The supernatural drama has captivated global audiences, accumulating over `r format(stranger_things_stats$total_hours, big.mark = ",")` total viewing hours across its four seasons and maintaining a presence in the global Top 10 for `r stranger_things_stats$total_weeks_top10`cumulative weeks.
+### **Netflix's 'Stranger Things' Sets Global Viewing Records Ahead of Epic Season 5 Finale**
 
-The series has demonstrated remarkable staying power, ranking as the \#`r stranger_things_rank` English-language TV show on Netflix by total viewership hours. Its international appeal is equally impressive, with the show charting in Top 10 lists across `r stranger_things_countries$countries_reached` countries worldwide. This multinational success demonstrates Netflix's ability to create content that transcends cultural boundaries while maintaining universal appeal.
+*Hit series reaches `r stranger_things_countries$countries_reached` countries with `r stranger_things_stats$viewership_billions` billion hours watched across four seasons*
 
-"Stranger Things exemplifies our commitment to creating 'gourmet cheeseburger' content—high-quality storytelling that resonates with audiences globally," said a Netflix spokesperson. "As we prepare for the series finale, we're reminded of the incredible journey this show has taken viewers on across four unforgettable seasons."
+NETFLIX — As anticipation builds for the fifth and final season of *Stranger Things*, Netflix today highlighted the unprecedented global success of the supernatural drama that has captivated audiences worldwide since 2016. The series has achieved remarkable milestones that cement its position as one of television's most influential modern phenomena.
 
-## Press Release 2: Netflix's Success in India
+*Stranger Things* has generated an extraordinary **`r stranger_things_stats$viewership_billions` billion hours** of global viewership across its four seasons, demonstrating the series' incredible staying power and broad appeal. The show has maintained consistent popularity in Netflix's Top 10 charts for up to **`r stranger_things_stats$max_weeks_any_season` weeks** per season, showcasing remarkable audience retention that few series achieve.
 
-``` r
-# Analyze Hindi content performance
-hindi_content <- COUNTRY_TOP_10 |>
-    filter(country_name == "India") |>
-    group_by(show_title, category) |>
-    summarise(
-        total_weeks = max(cumulative_weeks_in_top_10, na.rm = TRUE),
-        peak_rank = min(weekly_rank, na.rm = TRUE),
-        .groups = 'drop'
+The series' international reach spans **`r stranger_things_countries$countries_reached` countries**, proving that the nostalgic charm of 1980s Indiana resonates across diverse cultures and languages. This multinational appeal positions *Stranger Things* among Netflix's most successful English-language television productions, competing with other global phenomena for total viewership dominance.
+
+"*Stranger Things* exemplifies Netflix's commitment to creating 'gourmet cheeseburgers' — premium content that appeals to both critics and mass audiences worldwide," said a Netflix spokesperson. "The series' ability to maintain relevance across multiple seasons while expanding its global footprint demonstrates the universal power of great storytelling."
+
+---
+
+### Task 6: Netflix in India Press Release
+
+```{r}
+#| label: india-analysis
+#| code-summary: "Analyze Netflix Performance in India"
+
+# Analyze Hindi content and India-specific performance
+hindi_content <- GLOBAL_TOP_10 |>
+    filter(str_detect(category, "Non-English")) |>
+    # We'll use a proxy - content that appears in India but not US
+    left_join(
+        COUNTRY_TOP_10 |> 
+        filter(country_name == "India") |> 
+        distinct(show_title) |> 
+        mutate(in_india = TRUE),
+        by = "show_title"
     ) |>
-    arrange(desc(total_weeks)) |>
-    slice_head(n = 5)
-
-# Growth analysis
-india_growth <- COUNTRY_TOP_10 |>
-    filter(country_name == "India") |>
-    mutate(year = year(week)) |>
-    group_by(year) |>
-    summarise(
-        unique_titles = n_distinct(show_title),
-        avg_weekly_hours = mean(weekly_hours_viewed, na.rm = TRUE),
-        .groups = 'drop'
+    left_join(
+        COUNTRY_TOP_10 |> 
+        filter(country_name == "United States") |> 
+        distinct(show_title) |> 
+        mutate(in_us = TRUE),
+        by = "show_title"
     ) |>
-    arrange(year)
-
-# Calculate growth rate
-recent_years <- india_growth |> tail(2)
-growth_rate <- round(((recent_years$unique_titles[2] - recent_years$unique_titles[1]) / recent_years$unique_titles[1]) * 100, 1)
-```
-
-### Netflix Celebrates Explosive Growth in India with Record-Breaking Local Content Success
-
-**PRESS RELEASE**
-
-Netflix announces unprecedented growth in India, the world's most populous country, with local content achieving remarkable viewership milestones and demonstrating the streaming service's commitment to regional storytelling. Analysis of viewing patterns reveals a thriving ecosystem of Hindi-language programming that has captured the imagination of Indian audiences while showcasing the country's rich cultural narratives to global viewers.
-
-The platform's success in India is exemplified by breakout hits that have dominated local Top 10 charts for extended periods, with several titles maintaining positions for over 10 consecutive weeks. This sustained popularity indicates not just initial interest, but genuine audience engagement and word-of-mouth growth that drives long-term success.
-
-Netflix's India strategy shows impressive momentum, with the number of unique titles entering the country's Top 10 growing by `r growth_rate`% in recent years. This expansion reflects both increased local production and growing subscriber engagement. "India represents one of our most exciting growth markets," said a Netflix executive. "The diversity and quality of storytelling coming from Indian creators continues to set new benchmarks for regional content success globally."
-
-The streaming giant's investment in Indian content has created a virtuous cycle: local stories gain international recognition while global Netflix subscribers discover the rich storytelling traditions of Indian cinema and television.
-
-## Press Release 3: Global Expansion of Korean Content
-
-``` r
-# Analyze Korean/Non-English content success
-korean_analysis <- GLOBAL_TOP_10 |>
-    filter(category == "Films (Non-English)" | category == "TV (Non-English)") |>
-    # Focus on likely Korean content based on popular titles
-    filter(str_detect(show_title, "Squid|Kingdom|Sweet|Extraordinary|Business|All of Us|Money Heist: Korea|Physical|Glitch|Little Women|The Glory|King the Land|See You in My 19th Life") | 
-           show_title %in% c("Squid Game", "Hellbound", "My Name", "Kingdom", "Sweet Home")) |>
+    filter(in_india == TRUE & is.na(in_us)) |>
     group_by(show_title, category) |>
     summarise(
         total_hours = sum(weekly_hours_viewed, na.rm = TRUE),
-        total_weeks = max(cumulative_weeks_in_top_10, na.rm = TRUE),
         .groups = 'drop'
     ) |>
     arrange(desc(total_hours))
 
-# International reach of top Korean content
-korean_international <- COUNTRY_TOP_10 |>
-    filter(str_detect(show_title, "Squid Game|Kingdom|Sweet Home|Hellbound|My Name")) |>
-    group_by(show_title) |>
+# India-specific viewing data
+india_stats <- COUNTRY_TOP_10 |>
+    filter(country_name == "India") |>
+    group_by(year(week)) |>
     summarise(
-        countries_reached = n_distinct(country_name),
-        total_international_hours = sum(weekly_hours_viewed, na.rm = TRUE),
+        total_programs = n_distinct(show_title),
         .groups = 'drop'
     ) |>
-    arrange(desc(countries_reached))
+    arrange(`year(week)`)
+
+# Top India-exclusive content
+top_india_content <- hindi_content |>
+    head(3)
 ```
 
-### Netflix's Korean Wave Continues Global Domination with Unprecedented International Success
+---
 
-**PRESS RELEASE**
+## 🇮🇳 PRESS RELEASE: NETFLIX INDIA SUCCESS
 
-Netflix announces the continued global expansion of Korean content, building on the phenomenal success of "Squid Game" and establishing Korean storytelling as a dominant force in international entertainment. The streaming platform's investment in Korean creators has yielded remarkable results, with Korean titles consistently breaking viewership records and reaching audiences across multiple continents.
+### **Netflix India Emerges as Entertainment Powerhouse with Regional Content Driving Unprecedented Growth**
 
-Korean content on Netflix has demonstrated extraordinary staying power in global Top 10 charts, with flagship series maintaining positions for extended periods while attracting viewers from diverse cultural backgrounds. The success extends beyond individual titles, creating a "Korean Wave" effect where audiences actively seek out additional Korean content, driving discovery of both new releases and catalog titles.
+*Platform showcases diverse Indian storytelling with locally-resonant hits gaining millions of viewing hours*
 
-The international appeal of Korean programming is evidenced by its performance across `r max(korean_international$countries_reached, na.rm = TRUE)` countries, demonstrating Netflix's ability to transcend language barriers through compelling storytelling and high production values. "Korean creators bring a unique perspective to universal themes," noted a Netflix content executive. "Their work exemplifies our global content strategy—locally rooted stories with universal emotional resonance."
+MUMBAI — Netflix today announced significant milestones in the Indian market, highlighting the success of regional content that resonates specifically with South Asian audiences. The streaming giant's investment in Hindi-language and India-centric programming continues to drive substantial viewership growth in the world's most populous nation.
 
-This success has prompted Netflix to expand its Korean content investment significantly, with multiple new series and films in development. The streaming giant continues to partner with top Korean talent, ensuring a robust pipeline of content that serves both domestic Korean audiences and the growing international fanbase hungry for innovative Asian storytelling.
+Recent analysis reveals that India-exclusive content—programming that achieves top 10 status in India but doesn't chart in Western markets—has generated millions of viewing hours, demonstrating Netflix's success in creating culturally relevant entertainment. Leading this charge are breakthrough titles like **`r if(nrow(top_india_content) > 0) top_india_content$show_title[1] else "regional hits"`** and other locally-produced content that speaks directly to Indian audiences' preferences and cultural values.
 
-# Conclusion
+The growth trajectory in India shows consistent expansion, with Netflix's Top 10 charts featuring an increasingly diverse range of **`r max(india_stats$total_programs, na.rm = TRUE)` unique programs** in peak years, indicating both the platform's growing subscriber base and the success of its localization strategy. This content diversity spans multiple regional languages and genres, from thriller series to romantic comedies, reflecting India's rich entertainment landscape.
 
-Netflix's global Top 10 data reveals a platform successfully balancing local content creation with international appeal. From the record-breaking success of "Stranger Things" to the cultural phenomenon of Korean content and the growing importance of regional markets like India, Netflix demonstrates its evolution from a U.S.-centric service to a truly global entertainment platform.
+"India represents one of our most exciting growth markets," noted a Netflix executive. "Our success stems from understanding that Indian audiences want authentic, high-quality stories that reflect their experiences while maintaining the production values Netflix is known for globally. This approach has created a thriving ecosystem of content that travels well beyond traditional boundaries."
 
-The data shows that successful content transcends traditional boundaries—language, geography, and cultural differences—when supported by quality production and strategic global distribution. As Netflix continues to invest in diverse storytelling from creators worldwide, these trends suggest a future where regional content regularly achieves global success, creating a more interconnected and culturally rich entertainment landscape.
+The streaming service's India strategy focuses on identifying and developing local talent while providing them with global platform reach, creating opportunities for Indian stories to find audiences worldwide while serving the sophisticated entertainment demands of India's growing digital-native population.
+
+---
+
+### Task 7: Third Press Release - Global Animation Success
+
+```{r}
+#| label: animation-analysis
+#| code-summary: "Analyze Global Animation Performance"
+
+# Focus on animated content success globally
+animation_success <- GLOBAL_TOP_10 |>
+    filter(str_detect(show_title, "Anime|Pokemon|Dragon|Demon|Spirit|Naruto|Attack") | 
+           show_title %in% c("Arcane", "BoJack Horseman", "Big Mouth", "Castlevania")) |>
+    group_by(show_title, category) |>
+    summarise(
+        total_hours = sum(weekly_hours_viewed, na.rm = TRUE),
+        countries_reached = n_distinct(week),  # proxy for global reach
+        max_weeks = max(cumulative_weeks_in_top_10, na.rm = TRUE),
+        .groups = 'drop'
+    ) |>
+    arrange(desc(total_hours))
+
+# International animated content performance
+international_animation <- COUNTRY_TOP_10 |>
+    filter(str_detect(show_title, "Anime|Dragon|Demon|Spirit|Arcane|Pokemon")) |>
+    group_by(show_title) |>
+    summarise(
+        countries_charted = n_distinct(country_name),
+        .groups = 'drop'
+    ) |>
+    arrange(desc(countries_charted))
+
+# Top animated performer
+top_animated <- animation_success |>
+    slice(1)
+```
+
+---
+
+## 🎨 PRESS RELEASE: GLOBAL ANIMATION RENAISSANCE
+
+### **Netflix Leads Global Animation Renaissance as Diverse Animated Content Captures Worldwide Audiences**
+
+*Platform's animated series achieve cross-cultural success with titles reaching `r max(international_animation$countries_charted, na.rm = TRUE)` countries globally*
+
+GLOBAL — Netflix today celebrates the remarkable success of its animated programming strategy, as data reveals that animated series have become some of the platform's most globally successful content, transcending traditional cultural and language barriers to create truly universal entertainment experiences.
+
+Leading this animated renaissance is standout programming that has achieved exceptional international reach, with top-performing animated series appearing in Netflix's Top 10 charts across **`r max(international_animation$countries_charted, na.rm = TRUE)` different countries**. This unprecedented global appeal demonstrates that high-quality animation serves as a universal language that resonates with diverse audiences regardless of geographic location or cultural background.
+
+The success spans multiple animation styles and storytelling approaches, from Japanese anime that has found mainstream Western acceptance to original Netflix animated series that blend various international influences. **`r if(nrow(top_animated) > 0) top_animated$show_title else "Leading animated series"`** exemplifies this success, generating substantial viewership hours while maintaining consistent Top 10 presence for extended periods.
+
+"Animation has emerged as one of our most powerful tools for global storytelling," said a Netflix content executive. "These series prove that compelling characters and universal themes can transcend any barrier when presented through the limitless creative possibilities that animation provides."
+
+This animated content strategy aligns with Netflix's broader mission to create entertainment that functions as cultural bridges, bringing together audiences from different continents around shared viewing experiences. The success of these programs has also opened new opportunities for international animation studios and creators to reach global audiences through the Netflix platform.
+
+The streaming service continues to invest heavily in animated content across multiple regions, recognizing animation's unique ability to create franchises that appeal simultaneously to both local audiences and international viewers seeking fresh, innovative entertainment experiences.
+
+---
+
+## Conclusion
+
+This analysis of Netflix's Top 10 data reveals a platform that has successfully achieved its goal of creating "gourmet cheeseburgers" — high-quality content with mass appeal that transcends cultural boundaries. Key findings include:
+
+- **Global Reach**: Netflix's presence in `r countries_count` countries demonstrates unprecedented international penetration
+- **Content Longevity**: Series like *Stranger Things* and *Squid Game* maintain relevance across multiple seasons and years
+- **Cultural Bridge-Building**: Animated and non-English content successfully find audiences far beyond their origin markets
+- **Regional Adaptation**: Success in markets like India shows the value of locally-relevant content creation
+
+These insights support Netflix's continued investment in diverse, high-quality original programming while highlighting the platform's evolution into a truly global entertainment ecosystem.
+
+## Technical Appendix
+
+### Data Sources
+- Netflix TuDum Global Top 10: `r GLOBAL_TOP_10_FILENAME`
+- Netflix TuDum Country Top 10: `r COUNTRY_TOP_10_FILENAME`
+- Analysis Period: `r min(GLOBAL_TOP_10$week, na.rm = TRUE)` to `r max(GLOBAL_TOP_10$week, na.rm = TRUE)`
+
+### Methodology Notes
+- View
