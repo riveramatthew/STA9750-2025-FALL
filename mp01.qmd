@@ -1,17 +1,16 @@
 ---
 title: "Mini-Project 01 – Netflix Top 10 EDA"
-author: "Your Name"
+author: "Matthew Rivera"
 date: "`r Sys.Date()`"
-format: 
+format:
   html:
-    toc: true
-    toc-depth: 2
-    code-fold: true
     theme: cosmo
 execute:
   warning: false
   message: false
 ---
+
+![Netflix Logo](Netflix.png){ width=200px }
 
 ## Executive Summary
 
@@ -398,8 +397,6 @@ climbing_films |>
 #### Question 10: Which TV show/season hit the top 10 in the most countries in its debut week? In how many countries did it chart?
 
 ```{r}
-#| label: q10-international-debuts
-
 # Find TV shows/seasons and their debut week performance
 international_debuts <- COUNTRY_TOP_10 |>
     filter(str_detect(category, "TV")) |>
@@ -435,7 +432,6 @@ The TV show/season that hit the top 10 in the most countries in its debut week i
 ### Task 5: Stranger Things Season 5 Promotion
 
 ```{r}
-#| label: stranger-things-analysis
 
 # Analyze Stranger Things across all seasons
 stranger_things_stats <- GLOBAL_TOP_10 |>
@@ -472,12 +468,60 @@ english_tv_comparison <- GLOBAL_TOP_10 |>
 
 ### **The Culmination of a Cultural Milestone: Netflix Announces Final Season of Stranger Things Set for Late 2025**
 
-Since its debut in 2016, *Stranger Things* has transcended the boundaries of television, emerging as a global cultural touchstone that blends 1980s nostalgia with gripping supernatural storytelling. Netflix has officially announced that the series will draw to a close with its fifth and final season, slated for release in late 2025. 
-Over the course of four seasons, *Stranger Things* has redefined the landscape of serialized streaming content. The series has inspired a surge of retro-inspired costumes, viral social media moments, and even propelled Kate Bush’s “Running Up That Hill” to the top of global music charts decades after its original release. At its core, however, the show’s enduring appeal lies in its universal themes of friendship, resilience, and the collective struggle against adversity, resonating deeply with audiences worldwide. 
+Since its debut in 2016, *Stranger Things* has transcended the boundaries of television, emerging as a global cultural touchstone that blends 1980s nostalgia with gripping supernatural storytelling. Netflix has officially announced that the series will draw to a close with its fifth and final season, slated for release in late 2025.
+
+Over the course of four seasons, *Stranger Things* has redefined the landscape of serialized streaming content. The series has inspired a surge of retro-inspired costumes, viral social media moments, and even propelled Kate Bush’s “Running Up That Hill” to the top of global music charts decades after its original release. At its core, however, the show’s enduring appeal lies in its universal themes of friendship, resilience, and the collective struggle against adversity, resonating deeply with audiences worldwide.
+
 The data underscores the series’ remarkable impact: viewers have collectively devoted nearly **`r stranger_things_stats$viewership_billions` billion hours** to exploring the eerie town of Hawkins and its parallel dimension, the Upside Down. Stranger Things as maintained consistent popularity in Netflix's Top 10 charts for up to **`r stranger_things_stats$max_weeks_any_season` weeks**, showcasing remarkable audience retention that few series achieve. With a reach spanning **`r stranger_things_countries$countries_reached` countries**, countries, the show has woven itself into the global lexicon, where references to Demogorgons, Dungeons & Dragons, and Eggo waffles evoke a shared narrative experience. 
+
 In the annals of Netflix’s English-language programming, *Stranger Things* stands unparalleled, surpassing the viewership of other major titles such as Wednesday and Bridgerton. Its influence extends beyond metrics, setting a benchmark for the storytelling potential of streaming platforms. 
+
 As the world anticipates one final journey to Hawkins, the Duffer Brothers, alongside the talented ensemble cast, promise a season of unparalleled ambition and emotional depth. What began with the disappearance of a young boy and the arrival of a girl with extraordinary abilities will culminate in an epic finale that promises to captivate and surprise. 
+
 Prepare to venture into the Upside Down one last time. The fifth and final season of *Stranger Things* will premiere exclusively on Netflix in late 2025.
+
+### Task 6: Netflix India Press Release Analysis
+
+### Supporting R Code for Press Release 2: Commercial Success in India
+
+```{r}
+
+# Analyze India market performance across all content
+india_market_stats <- COUNTRY_TOP_10 |>
+    filter(country_name == "India") |>
+    group_by(show_title) |>
+    summarise(
+        max_weeks_top10 = max(cumulative_weeks_in_top_10, na.rm = TRUE),
+        category = first(category),
+        .groups = 'drop'
+    ) |>
+    summarise(
+        unique_titles = n_distinct(show_title),
+        longest_run = max(max_weeks_top10, na.rm = TRUE),
+        avg_weeks = round(mean(max_weeks_top10, na.rm = TRUE), 1)
+    )
+
+# Find content exclusive to India market (not in US)
+india_exclusive_content <- COUNTRY_TOP_10 |>
+    filter(country_name == "India") |>
+    anti_join(
+        COUNTRY_TOP_10 |> filter(country_name == "United States"),
+        by = "show_title"
+    ) |>
+    summarise(exclusive_titles = n_distinct(show_title))
+
+# International reach of India-popular content
+india_international_reach <- COUNTRY_TOP_10 |>
+    filter(country_name == "India") |>
+    distinct(show_title) |>
+    inner_join(
+        COUNTRY_TOP_10 |>
+            group_by(show_title) |>
+            summarise(countries_reached = n_distinct(country_name), .groups = 'drop'),
+        by = "show_title"
+    ) |>
+    summarise(avg_reach = round(mean(countries_reached), 1))
+```
 
 ------------------------------------------------------------------------
 
@@ -526,6 +570,6 @@ success_metrics |>
   knitr::kable(caption = "Netflix Global Performance Metrics")
 ```
 
-------------------------------------------------------------------------
+-------------------------------------------------------------------
 
 *This analysis demonstrates Netflix's remarkable global reach and the universal appeal of quality storytelling across cultural boundaries. As we continue expanding our international footprint, these insights will guide our content strategy and market development initiatives.*
