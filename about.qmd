@@ -19,7 +19,7 @@ title: "About Me"
 **Resume:** [Download PDF](files/Matthew_Rivera_Resume.pdf)
 
 > **Summary**  
-> Analytical and results-driven Business Analyst and Technology Risk Consultant with experience in IT governance, data analytics, and BI visualization. Skilled in Python, SQL, R, Tableau, Power BI, and ERP systems, with a proven track record of implementing agile and Kanban methodologies to streamline workflows, enhance operational resilience, and deliver actionable business insights. Passionate about leveraging data-driven solutions to support strategic decision-making and optimize organizational performance.
+> Results-driven Business Analyst and Technology Consultant turning complex data into actionable insights. Skilled in Python, SQL, R, Tableau, Power BI, and ERP systems, with a proven track record of streamlining workflows and driving smarter business decisions.
 :::
 
 :::
