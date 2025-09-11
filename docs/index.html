@@ -6,8 +6,9 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
+<meta name="author" content="Matthew Rivera">
 
-<title>My Data Science Portfolio – STA 9750 Portfolio</title>
+<title>STA 9750 - Software Tools for Data Analysis – STA 9750 Portfolio</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -19,6 +20,40 @@ ul.task-list li input[type="checkbox"] {
   width: 0.8em;
   margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
   vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { display: inline-block; text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
 }
 </style>
 
@@ -76,6 +111,8 @@ ul.task-list li input[type="checkbox"] {
 <script src="site_libs/Proj4Leaflet-1.0.1/proj4leaflet.js"></script>
 <link href="site_libs/rstudio_leaflet-1.3.1/rstudio_leaflet.css" rel="stylesheet">
 <script src="site_libs/leaflet-binding-2.2.2/leaflet.js"></script>
+<script src="site_libs/leaflet-providers-2.0.0/leaflet-providers_2.0.0.js"></script>
+<script src="site_libs/leaflet-providers-plugin-2.2.2/leaflet-providers-plugin.js"></script>
 
 
 </head>
@@ -125,13 +162,19 @@ ul.task-list li input[type="checkbox"] {
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title">My Data Science Portfolio</h1>
+<h1 class="title">STA 9750 - Software Tools for Data Analysis</h1>
 </div>
 
 
 
 <div class="quarto-title-meta">
 
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>Matthew Rivera </p>
+          </div>
+  </div>
     
   
     
@@ -142,21 +185,97 @@ ul.task-list li input[type="checkbox"] {
 </header>
 
 
-<section id="welcome" class="level2">
-<h2 class="anchored" data-anchor-id="welcome">Welcome</h2>
-<p>Hello! My name is Matthew Rivera, and I am a Master’s student at Baruch College specializing in Data Science and Analytics. I enjoy transforming complex data sets into actionable insights and building reproducible workflows. This site will host my STA 9750 mini-projects and final project.</p>
-<p>You can find mini-projects in the <strong>mini-projects/</strong> folder. Each mini-project will be a separate Quarto document rendered to HTML and included in this site.</p>
-<p>Check out my <a href="./about.html">About Me</a> page to learn more about my experiences.</p>
+<section id="welcome-to-my-sta-9750-portfolio" class="level2">
+<h2 class="anchored" data-anchor-id="welcome-to-my-sta-9750-portfolio">Welcome to My STA 9750 Portfolio</h2>
+<p>This website highlights my journey through <strong>STA 9750 - Software Tools for Data Analysis</strong> at Baruch College. Here, you’ll find summaries of my coursework, mini-projects, and reproducible research in R and Quarto. Each project demonstrates my growth in statistical modeling, data visualization, and advanced analytics applications.</p>
+<p>Explore the mini-projects below to see hands-on examples of my skills in action.</p>
+<hr>
 </section>
-<section id="baruch-map" class="level2">
-<h2 class="anchored" data-anchor-id="baruch-map">Baruch Map</h2>
-<div class="cell">
-<div class="cell-output cell-output-stderr">
-<pre><code>Loading required package: leaflet</code></pre>
+<section id="about-me" class="level2">
+<h2 class="anchored" data-anchor-id="about-me">About Me</h2>
+<p>Hello! I’m <strong>Matthew Rivera</strong>, a Business Analytics graduate student at Baruch College’s Zicklin School of Business, expected to graduate in June 2027. With a BBA in Computer Information Systems (Data Analytics concentration) completed in May 2024, I’m passionate about leveraging data to drive business insights and operational excellence.</p>
+<section id="background" class="level3">
+<h3 class="anchored" data-anchor-id="background">Background</h3>
+<p>My technical toolkit spans from traditional business intelligence tools like <strong>Tableau</strong> to advanced analytics with <strong>Python, R, TensorFlow, and PyTorch</strong>, with hands-on experience in machine learning projects including customer segmentation and recommendation systems.</p>
+</section>
+<section id="current-focus-goals" class="level3">
+<h3 class="anchored" data-anchor-id="current-focus-goals">Current Focus &amp; Goals</h3>
+<p>Through the STA 9750 Applied Statistics &amp; Quantitative Analysis course, I’m advancing my expertise in:<br>
+- <strong>Advanced Statistical Modeling</strong> for business applications<br>
+- <strong>Technical Communication</strong> of complex analytical findings<br>
+- <strong>Reproducible Research Practices</strong> using R and Quarto<br>
+- <strong>Peer Collaboration</strong> in data science workflows</p>
+<hr>
+</section>
+</section>
+<section id="course-portfolio" class="level2">
+<h2 class="anchored" data-anchor-id="course-portfolio">Course Portfolio</h2>
+<p>This website showcases my STA 9750 coursework, demonstrating progression through statistical analysis and data science methodologies.</p>
+<section id="mini-projects-progress" class="level3">
+<h3 class="anchored" data-anchor-id="mini-projects-progress">Mini-Projects Progress</h3>
+<div style="display:flex; flex-wrap: wrap; gap: 20px;">
+<div style="width:200px; text-align:center;">
+<a href="./mp01.html"> <img src="images/thumbnail_01.png" alt="Mini-Project 01" style="width:100%; border-radius:8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+<p>
+📊 Mini-Project #01: Exploratory Data Analysis
+</p>
+</a><p><a href="./mp01.html"></a></p>
 </div>
+<div style="width:200px; text-align:center;">
+<a href="mp02.qmd"> <img src="images/thumbnail_02.png" alt="Mini-Project 02" style="width:100%; border-radius:8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+<p>
+📈 Mini-Project #02: Statistical Inference &amp; Modeling
+</p>
+</a><p><a href="mp02.qmd"></a></p>
+</div>
+<div style="width:200px; text-align:center;">
+<a href="mp03.qmd"> <img src="images/thumbnail_03.png" alt="Mini-Project 03" style="width:100%; border-radius:8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+<p>
+🔍 Mini-Project #03: Advanced Analytics Applications
+</p>
+</a><p><a href="mp03.qmd"></a></p>
+</div>
+<div style="width:200px; text-align:center;">
+<a href="mp04.qmd"> <img src="images/thumbnail_04.png" alt="Mini-Project 04" style="width:100%; border-radius:8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+<p>
+🎯 Mini-Project #04: Comprehensive Data Science Project
+</p>
+</a><p><a href="mp04.qmd"></a></p>
+</div>
+</div>
+<hr>
+</section>
+</section>
+<section id="connect-with-me" class="level2">
+<h2 class="anchored" data-anchor-id="connect-with-me">Connect With Me</h2>
+<ul>
+<li>📧 <strong>Email</strong>: <a href="mailto:matthew.rivera3@baruchmail.cuny.edu">matthew.rivera3@baruchmail.cuny.edu</a><br>
+</li>
+<li>💼 <strong>LinkedIn</strong>: <a href="https://linkedin.com/in/matthewrivera">linkedin.com/in/matthewrivera</a><br>
+</li>
+<li>👨‍💻 <strong>GitHub</strong>: <a href="https://github.com/riveramatthew">github.com/riveramatthew</a></li>
+</ul>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span>(<span class="sc">!</span><span class="fu">require</span>(<span class="st">"leaflet"</span>)) <span class="fu">install.packages</span>(<span class="st">"leaflet"</span>, <span class="at">quiet =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(leaflet)</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>baruch_longitude <span class="ot">&lt;-</span> <span class="sc">-</span><span class="fl">73.98333</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>baruch_latitude  <span class="ot">&lt;-</span> <span class="fl">40.75028</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="fu">leaflet</span>() <span class="sc">|&gt;</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">addProviderTiles</span>(providers<span class="sc">$</span>CartoDB.Positron) <span class="sc">|&gt;</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">setView</span>(baruch_longitude, baruch_latitude, <span class="at">zoom =</span> <span class="dv">17</span>) <span class="sc">|&gt;</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">addMarkers</span>(</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">lng =</span> baruch_longitude,</span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">lat =</span> baruch_latitude,</span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>    <span class="at">popup =</span> <span class="st">"&lt;b&gt;Baruch College&lt;/b&gt;&lt;br&gt;55 Lexington Ave, NYC&lt;br&gt;</span></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a><span class="st">             &lt;a href='https://www.baruch.cuny.edu' target='_blank'&gt;Visit Website&lt;/a&gt;"</span>,</span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">options =</span> <span class="fu">popupOptions</span>(<span class="at">className =</span> <span class="st">"custom-popup"</span>)</span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>  )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
-<div class="leaflet html-widget html-fill-item" id="htmlwidget-6307a8341f1cfe46ccd9" style="width:100%;height:464px;"></div>
-<script type="application/json" data-for="htmlwidget-6307a8341f1cfe46ccd9">{"x":{"options":{"crs":{"crsClass":"L.CRS.EPSG3857","code":null,"proj4def":null,"projectedBounds":null,"options":{}}},"calls":[{"method":"addTiles","args":["https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",null,null,{"minZoom":0,"maxZoom":18,"tileSize":256,"subdomains":"abc","errorTileUrl":"","tms":false,"noWrap":false,"zoomOffset":0,"zoomReverse":false,"opacity":1,"zIndex":1,"detectRetina":false,"attribution":"&copy; <a href=\"https://openstreetmap.org/copyright/\">OpenStreetMap<\/a>,  <a href=\"https://opendatacommons.org/licenses/odbl/\">ODbL<\/a>"}]},{"method":"addPopups","args":[40.75028,-73.98333,"I am a Master's student at <b>Baruch College<\/b>!",null,null,{"maxWidth":300,"minWidth":50,"autoPan":true,"keepInView":false,"closeButton":true,"className":""}]}],"setView":[[40.75028,-73.98333],17,[]],"limits":{"lat":[40.75028,40.75028],"lng":[-73.98333,-73.98333]}},"evals":[],"jsHooks":[]}</script>
+<div class="leaflet html-widget html-fill-item" id="htmlwidget-655d20186d9e42b6ad06" style="width:100%;height:464px;"></div>
+<script type="application/json" data-for="htmlwidget-655d20186d9e42b6ad06">{"x":{"options":{"crs":{"crsClass":"L.CRS.EPSG3857","code":null,"proj4def":null,"projectedBounds":null,"options":{}}},"calls":[{"method":"addProviderTiles","args":["CartoDB.Positron",null,null,{"errorTileUrl":"","noWrap":false,"detectRetina":false}]},{"method":"addMarkers","args":[40.75028,-73.98333,null,null,null,{"maxWidth":300,"minWidth":50,"autoPan":true,"keepInView":false,"closeButton":true,"className":"custom-popup"},"<b>Baruch College<\/b><br>55 Lexington Ave, NYC<br>\n             <a href='https://www.baruch.cuny.edu' target='_blank'>Visit Website<\/a>",null,null,null,null,{"interactive":false,"permanent":false,"direction":"auto","opacity":1,"offset":[0,0],"textsize":"10px","textOnly":false,"className":"","sticky":true},null]}],"setView":[[40.75028,-73.98333],17,[]],"limits":{"lat":[40.75028,40.75028],"lng":[-73.98333,-73.98333]}},"evals":[],"jsHooks":[]}</script>
+<p>Interactive map of Baruch College campus</p>
 </div>
 </div>
 

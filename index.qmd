@@ -1,28 +1,102 @@
 ---
-title: "My Data Science Portfolio"
+title: "STA 9750 - Software Tools for Data Analysis"
+author: "Matthew Rivera"
 ---
 
-## Welcome
+## Welcome to My STA 9750 Portfolio
 
-Hello! My name is Matthew Rivera, and I am a Master's student at Baruch College specializing in Data Science and Analytics. I enjoy transforming complex data sets into actionable insights and building reproducible workflows. This site will host my STA 9750 mini-projects and final project.
+This website highlights my journey through **STA 9750 - Software Tools for Data Analysis** at Baruch College. Here, you’ll find summaries of my coursework, mini-projects, and reproducible research in R and Quarto. Each project demonstrates my growth in statistical modeling, data visualization, and advanced analytics applications.
 
-You can find mini-projects in the **mini-projects/** folder. Each mini-project will be a separate Quarto document rendered to HTML and included in this site.
+Explore the mini-projects below to see hands-on examples of my skills in action.
 
-Check out my [About Me](about.qmd) page to learn more about my experiences.
+---
 
-## Baruch Map
+## About Me
+
+Hello! I'm **Matthew Rivera**, a Business Analytics graduate student at Baruch College's Zicklin School of Business, expected to graduate in June 2027. With a BBA in Computer Information Systems (Data Analytics concentration) completed in May 2024, I'm passionate about leveraging data to drive business insights and operational excellence.
+
+### Background
+
+My technical toolkit spans from traditional business intelligence tools like **Tableau** to advanced analytics with **Python, R, TensorFlow, and PyTorch**, with hands-on experience in machine learning projects including customer segmentation and recommendation systems.
+
+### Current Focus & Goals
+
+Through the STA 9750 Applied Statistics & Quantitative Analysis course, I'm advancing my expertise in:  
+- **Advanced Statistical Modeling** for business applications  
+- **Technical Communication** of complex analytical findings  
+- **Reproducible Research Practices** using R and Quarto  
+- **Peer Collaboration** in data science workflows  
+
+---
+
+## Course Portfolio
+
+This website showcases my STA 9750 coursework, demonstrating progression through statistical analysis and data science methodologies.
+
+### Mini-Projects Progress
+
+<div style="display:flex; flex-wrap: wrap; gap: 20px;">
+
+<div style="width:200px; text-align:center;">
+  <a href="mp01.qmd">
+    <img src="images/thumbnail_01.png" alt="Mini-Project 01" style="width:100%; border-radius:8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+    <p>📊 Mini-Project #01: Exploratory Data Analysis</p>
+  </a>
+</div>
+
+<div style="width:200px; text-align:center;">
+  <a href="mp02.qmd">
+    <img src="images/thumbnail_02.png" alt="Mini-Project 02" style="width:100%; border-radius:8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+    <p>📈 Mini-Project #02: Statistical Inference & Modeling</p>
+  </a>
+</div>
+
+<div style="width:200px; text-align:center;">
+  <a href="mp03.qmd">
+    <img src="images/thumbnail_03.png" alt="Mini-Project 03" style="width:100%; border-radius:8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+    <p>🔍 Mini-Project #03: Advanced Analytics Applications</p>
+  </a>
+</div>
+
+<div style="width:200px; text-align:center;">
+  <a href="mp04.qmd">
+    <img src="images/thumbnail_04.png" alt="Mini-Project 04" style="width:100%; border-radius:8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+    <p>🎯 Mini-Project #04: Comprehensive Data Science Project</p>
+  </a>
+</div>
+
+</div>
+
+---
+
+## Connect With Me
+
+- 📧 **Email**: [matthew.rivera3@baruchmail.cuny.edu](mailto:matthew.rivera3@baruchmail.cuny.edu)  
+- 💼 **LinkedIn**: [linkedin.com/in/matthewrivera](https://linkedin.com/in/matthewrivera)  
+- 👨‍💻 **GitHub**: [github.com/riveramatthew](https://github.com/riveramatthew)
 
 ```{r}
-#| echo: false
-if(!require("leaflet")) install.packages("leaflet")
+#| echo: true
+#| message: false
+#| warning: false
+#| fig-cap: "Interactive map of Baruch College campus"
+#| fig-alt: "Map centered on Baruch College at 55 Lexington Ave, NYC"
+#| class-output: map-container
+
+if(!require("leaflet")) install.packages("leaflet", quiet = TRUE)
 library(leaflet)
 
 baruch_longitude <- -73.98333
 baruch_latitude  <- 40.75028
 
 leaflet() |>
-  addTiles() |>
-  setView(baruch_longitude, baruch_latitude, zoom=17) |>
-  addPopups(baruch_longitude, baruch_latitude, 
-            "I am a Master's student at <b>Baruch College</b>!")
+  addProviderTiles(providers$CartoDB.Positron) |>
+  setView(baruch_longitude, baruch_latitude, zoom = 17) |>
+  addMarkers(
+    lng = baruch_longitude,
+    lat = baruch_latitude,
+    popup = "<b>Baruch College</b><br>55 Lexington Ave, NYC<br>
+             <a href='https://www.baruch.cuny.edu' target='_blank'>Visit Website</a>",
+    options = popupOptions(className = "custom-popup")
+  )
 ```
