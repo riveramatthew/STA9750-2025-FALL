@@ -4,18 +4,32 @@ title: "About Me"
 
 # Matthew Rivera
 
+::: {.columns}
+
+::: {.column width="25%"}
+![Matthew Rivera](images/matthew_photo.jpg){width=100% style="border-radius:50%"}
+:::
+
+::: {.column width="75%"}
 **Location:** Queens, NY  
-**Phone:** (347) 418-6516
+**Phone:** (347) 418-6516  
 
 **LinkedIn:** [linkedin.com/in/rivera-matthew](https://linkedin.com/in/rivera-matthew)  
-**GitHub:** [https://github.com/riveramatthew/STA9750-2025-FALL.git](https://github.com/riveramatthew/Matthew.Rivera.git)
+**GitHub:** [https://github.com/riveramatthew/STA9750-2025-FALL.git](https://github.com/riveramatthew/Matthew.Rivera.git)  
+**Resume:** [Download PDF](files/Matthew_Rivera_Resume.pdf)
+
+> **Summary**  
+> Analytical and results-driven Business Analyst and Technology Risk Consultant with experience in IT governance, data analytics, and BI visualization. Skilled in Python, SQL, R, Tableau, Power BI, and ERP systems, with a proven track record of implementing agile and Kanban methodologies to streamline workflows, enhance operational resilience, and deliver actionable business insights. Passionate about leveraging data-driven solutions to support strategic decision-making and optimize organizational performance.
+:::
+
+:::
 
 ---
 
 ## Education
 
 - **Baruch College, Zicklin School of Business** | BBA in Computer Information Systems | GPA: 3.6/4.0 | 05/2024  
-- **Baruch College, Zicklin School of Business** | MS in Business Analytics | Concentration: Accounting Analytics | Expected 06/2027
+- **Baruch College, Zicklin School of Business** | MS in Business Analytics | Concentration: Data Analytics | Expected 06/2027
 
 ---
 
@@ -30,28 +44,41 @@ title: "About Me"
 
 ## Professional Experience
 
-### Federal Reserve Bank of New York (FRBNY) | Technology Risk Consultant | 09/23 – 09/24
+### Federal Reserve Bank of New York (FRBNY) | Business Analyst Consultant | 09/23 – 09/24
 - Applied agile governance practices, reducing project delivery timelines by 25% and improving risk visibility.  
 - Implemented Kanban workflows to strengthen operational resilience and support compliance.  
 - Partnered with IT teams to launch a risk management system, decreasing post-release bugs by 25%.  
 - Authored end-user documentation and training guides to improve adherence to IT policies.  
 - Facilitated collaboration between management and technical teams to transform IT data into actionable insights.
 
-### Federal Reserve Bank of New York (FRBNY) | Technology Risk Intern | 06/23 – 08/23
-- Developed Tableau dashboards integrating three data sources for real-time monitoring of IT performance.  
-- Automated IT reporting workflows, cutting manual prep time by 30%.
+### Federal Reserve Bank of New York (FRBNY) | Business Analyst Intern | 06/23 – 08/23
+- Automated IT reporting workflows, cutting manual preparation time by 30% and improving oversight efficiency.  
+- Led the adoption of Kanban workflow metrics for risk management processes, enhancing operational resilience and ensuring compliance with internal control standards.  
+- Implemented agile governance practices in Jira—including sprint planning, backlog refinement, and user story management—improving traceability of IT requirements to control objectives and accelerating project delivery timelines.  
+- Developed Tableau dashboards integrating different data sources, including Archer software platform, enabling real-time monitoring of IT performance and strengthening oversight of anomaly detection and incident response (20% faster response).
 
 ### Accenture LLP | Test Engineer Intern | 06/22 – 08/22
-- Developed clear documentation and collaborated with global teams to ensure consistent quality standards.
+- Contributed to streamlined workflows and improved stakeholder communication by developing clear documentation and engaging in proactive cross-functional collaboration with global teams.  
+- Collaborated with global teams across time zones to coordinate testing activities, ensure consistent quality standards, and support seamless testing handoffs.
 
 ---
 
 ## Projects & Competitions
 
-- **IT Audit Case Project – Baruch College:** Led a team of 4 in a simulated IT audit, assessing ITGCs using COBIT and NIST frameworks. Delivered a comprehensive audit report and presentation aligned with SOX compliance standards.
+- **Creating Customer Segments with Arvato** | **Python, pandas, NumPy, scikit-learn, PCA, k-means, matplotlib, seaborn**  
+• Analyzed large-scale proprietary demographic data (890K+ records, 85 features) to identify customer segments for a German mail-order company.  
+• Engineered a full preprocessing pipeline to handle missing values, re-encode categorical features, and normalize mixed-type data for modeling.  
+• Applied dimensionality reduction using PCA, retaining principal components that explained the majority of variance, to optimize model performance and interpret latent feature relationships.  
+• Performed unsupervised learning with K-Means clustering to segment customers, comparing population vs. customer distributions to uncover target consumer profiles and market differences.
+
+- **Recommendation System** | **Python, pandas, NumPy, scikit-learn, NLP, collaborative & content-based filtering**  
+• Developed a personalized recommendation engine in IBM Watson Studio by leveraging collaborative filtering, clustering, and dimensionality reduction techniques to connect users with relevant AI/ML assets.  
+• Applied unsupervised machine learning methods (K-Means, PCA) to identify latent user-item interaction patterns and optimize similarity-based recommendations.  
+• Evaluated model performance using precision, recall, and coverage metrics, iteratively tuning to improve recommendation accuracy and system usability.  
+• Enhanced user personalization by combining clustering insights with item-based filtering, improving asset discovery in a collaborative ecosystem.
 
 ---
 
 ## Leadership & Activities
 
-- **Baruch Data Science and Analytics Club:** Member, collaborating on data analytics projects and networking with industry professionals (2024–Present).
+- **Baruch Data Science and Analytics Club:** Member, collaborating on data analytics projects and networking with industry professionals (2024–Present)
