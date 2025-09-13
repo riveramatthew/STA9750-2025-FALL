@@ -4,13 +4,8 @@ title: "About Me"
 
 # Matthew Rivera
 
-::: {.columns}
+![Matthew Rivera](matthew_photo.jpg){width=50% style="border-radius:25%"}
 
-::: {.column width="25%"}
-![Matthew Rivera](images/matthew_photo.jpg){width=100% style="border-radius:50%"}
-:::
-
-::: {.column width="75%"}
 **Location:** Queens, NY  
 **Phone:** (347) 418-6516  
 
