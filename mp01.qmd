@@ -24,7 +24,7 @@ As a data analyst at Netflix supporting the Public Relations team, I have analyz
 
 The key findings demonstrate Netflix's evolution from a US-centric platform to a truly global entertainment ecosystem, with non-English content now representing a significant portion of viewing hours and local productions driving subscriber growth in key markets.
 
-## [Data Acquisition and Preparation]{style="color:red"}.
+## [Data Acquisition and Preparation]{style="color:red"}
 
 ### Task 1: Data Acquisition
 
