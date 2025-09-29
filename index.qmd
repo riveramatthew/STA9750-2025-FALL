@@ -40,7 +40,7 @@ This website showcases my STA 9750 coursework, demonstrating progression through
 
 <div style="width:200px; text-align:center;">
   <a href="mp01.qmd">
-    <img src="images/thumbnail_01.png" alt="Mini-Project 01" style="width:100%; border-radius:8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+    <img src="Netflix(1).png" alt="Mini-Project 01" style="width:100%; border-radius:8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
     <p>📊 Mini-Project #01: Exploratory Data Analysis</p>
   </a>
 </div>
