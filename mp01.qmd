@@ -51,7 +51,6 @@ if(!file.exists(COUNTRY_TOP_10_FILENAME)){
 }
 ```
 
-
 The datasets required minimal preprocessing, primarily converting Netflix's "N/A" string values to proper NA values for accurate analysis.
 
 ```{r}
@@ -290,26 +289,33 @@ red_notice_2021 <- GLOBAL_TOP_10 %>%
 
 ```{r}
 # Find films that didn't debut at #1 but eventually got there
-us_number_ones <- COUNTRY_TOP_10 |>
-    filter(country_name == "United States" & str_detect(category, "Films") & weekly_rank == 1) |>
-    distinct(show_title)
-
 climbing_films <- COUNTRY_TOP_10 |>
   filter(country_name == "United States", str_detect(category, "Films")) |>
   group_by(show_title) |>
   arrange(week) |>
   summarise(
-    first_rank   = first(weekly_rank),
-    hit_number_1 = any(weekly_rank == 1),
-    latest_week  = if (any(weekly_rank == 1)) max(week[weekly_rank == 1]) else as.Date(NA),
+    first_rank      = first(weekly_rank),
+    debut_week      = first(week),
+    hit_number_1    = any(weekly_rank == 1),
+    first_week_at_1 = if (any(weekly_rank == 1)) min(week[weekly_rank == 1]) else as.Date(NA),
     .groups = "drop"
   ) |>
+  # Only keep titles that didn't debut at #1 but reached it later
   filter(first_rank > 1 & hit_number_1) |>
-  arrange(desc(latest_week))
+  mutate(
+    time_to_1_weeks = as.integer(first_week_at_1 - debut_week) / 7
+  ) |>
+  arrange(desc(first_week_at_1))
 
-# Table output
+# Table output with cleaner columns
 climbing_films |>
-  datatable(options = list(searching = FALSE, info = FALSE, pageLength = 10)) |> formatRound("first_rank", 0)
+  select(show_title, debut_week, first_rank, first_week_at_1, time_to_1_weeks) |>
+  datatable(
+    options = list(searching = FALSE, info = FALSE, pageLength = 10),
+    colnames = c("Film Title", "Debut Week", "Debut Rank", "First Week at #1", "Weeks to #1")
+  ) |>
+  formatRound("first_rank", 0) |>
+  formatRound("time_to_1_weeks", 0)
 
 ```
 
@@ -340,7 +346,7 @@ international_debuts %>%
   formatRound("countries_charted", 0)
 ```
 
-In its debut week, <span style='color:red;'>`r international_debuts$countries_charted`</span> countries featured `r paste0("<span style='color:red;'>", international_debuts$show_title, ": ", international_debuts$season_title, "</span>")` in their Top 10 charts.
+In its debut week, [`r international_debuts$countries_charted`]{style="color:red;"} countries featured `r paste0("<span style='color:red;'>", international_debuts$show_title, ": ", international_debuts$season_title, "</span>")` in their Top 10 charts.
 
 The show that managed to chart in the most countries right out of the gate demonstrates Netflix's global distribution power.
 
@@ -403,6 +409,7 @@ st_by_season %>%
   )
 
 ```
+
 "Displays total viewing hours per season, highlighting audience engagement—creative visualization for extra credit."
 
 According to Netflix’s global viewing data, the series has generated approximately [`r stranger_things_stats$viewership_billions`]{style="color:red;"} **billion total viewing hours** across its four released seasons and reached audiences in [`r stranger_things_countries$countries_reached`]{style="color:red"} **countries**. Unlike most serialized programs that decline in popularity after early peaks, Stranger Things has maintained long-term engagement, regularly appearing in Netflix’s Global Top 10 rankings over multiple years.
@@ -551,16 +558,15 @@ international_growth_plot
 
 The data shows a decisive upward trajectory for international content:
 
-- 2021: [`r paste0(round(international_growth$total_hours[1] / 1e9, 1), " billion")`]{style="color:red"} hours viewed across 171 titles
-- 2022: [`r paste0(round(international_growth$total_hours[2] / 1e9, 1), " billion")`]{style="color:red"} hours (+64%) across 356 titles
-- 2023: [`r paste0(round(international_growth$total_hours[3] / 1e9, 1), " billion")`]{style="color:red"} hours (+0.9%) across 382 titles
-- 2024: [`r paste0(round(international_growth$total_hours[4] / 1e9, 1), " billion")`]{style="color:red"} hours (–7%) across 394 titles
-- 2025: [`r paste0(round(international_growth$total_hours[5] / 1e9, 1), " billion")`]{style="color:red"} hours (–21%) across 268 titles
+-   2021: [`r paste0(round(international_growth$total_hours[1] / 1e9, 1), " billion")`]{style="color:red"} hours viewed across 171 titles
+-   2022: [`r paste0(round(international_growth$total_hours[2] / 1e9, 1), " billion")`]{style="color:red"} hours (+64%) across 356 titles
+-   2023: [`r paste0(round(international_growth$total_hours[3] / 1e9, 1), " billion")`]{style="color:red"} hours (+0.9%) across 382 titles
+-   2024: [`r paste0(round(international_growth$total_hours[4] / 1e9, 1), " billion")`]{style="color:red"} hours (–7%) across 394 titles
+-   2025: [`r paste0(round(international_growth$total_hours[5] / 1e9, 1), " billion")`]{style="color:red"} hours (–21%) across 268 titles
 
 Even with the moderation in 2024–2025, the long-term shift is clear: non-English programming has become a cornerstone of Netflix’s global Top 10.
 
 Despite rapid expansion in catalog size, audience appetite remains strong. In 2021, non-English titles averaged 48.4 million hours viewed per title. By 2023, that figure was 35.9 million hours per title, evidence that growth in volume has not diluted audience engagement.
-
 
 ```{r}
 # Top Non-English Titles by Hours Viewed
@@ -584,11 +590,11 @@ datatable(options = list(searching = FALSE, info = FALSE, pageLength = 10)) %>%
 
 Some shows have set unprecedented benchmarks for cross-border popularity:
 
-- `r cross_regional_hits$show_title[1]` (South Korea) – 5.05 billion hours over 42 weeks
-- `r cross_regional_hits$show_title[2]` (Spain) – 1.19 billion hours across 16 weeks
-- `r cross_regional_hits$show_title[3]` (Colombia) – 813 million hours across 28 weeks
-- `r cross_regional_hits$show_title[4]` (South Korea) – 662 million hours in 21 weeks
-- `r cross_regional_hits$show_title[5]`(South Korea) – 659 million hours across 11 weeks
+-   `r cross_regional_hits$show_title[1]` (South Korea) – 5.05 billion hours over 42 weeks
+-   `r cross_regional_hits$show_title[2]` (Spain) – 1.19 billion hours across 16 weeks
+-   `r cross_regional_hits$show_title[3]` (Colombia) – 813 million hours across 28 weeks
+-   `r cross_regional_hits$show_title[4]` (South Korea) – 662 million hours in 21 weeks
+-   `r cross_regional_hits$show_title[5]`(South Korea) – 659 million hours across 11 weeks
 
 Analysts attribute the rise to Netflix’s recommendation algorithms, which seamlessly introduce subscribers to content outside their home language. By promoting localized hits internationally, Netflix has redefined how entertainment is distributed and consumed. Netflix is no longer just a streaming service—it is a global hub for cultural storytelling, proving what the industry has long suspected: great stories transcend language.
 
