@@ -3,7 +3,7 @@ title: "Mini-Project 01 – Netflix Top 10 EDA"
 subtitle: "Exploring the Most Popular Programming on Netflix"
 author: "Matthew Rivera"
 date: "`r Sys.Date()`"
-format:
+format: 
   html:
     theme: default
     toc: true
@@ -18,7 +18,7 @@ execute:
   echo: true
 ---
 
-## Executive Summary
+## [Executive Summary]{style="color:red"}
 
 As a data analyst at Netflix supporting the Public Relations team, I have analyzed Netflix's public Top 10 data to identify and quantify recent successes in original content. This analysis reveals compelling stories about Netflix's global reach, the enduring power of flagship series like Stranger Things, and the company's successful expansion into international markets, particularly India.
 
@@ -52,7 +52,6 @@ if(!file.exists(COUNTRY_TOP_10_FILENAME)){
 }
 ```
 
-### Data Cleaning and Import
 
 The datasets required minimal preprocessing, primarily converting Netflix's "N/A" string values to proper NA values for accurate analysis.
 
@@ -89,7 +88,7 @@ COUNTRY_TOP_10 <- read_tsv(COUNTRY_TOP_10_FILENAME, na = c("", "NA", "N/A"),
 glimpse(COUNTRY_TOP_10)
 ```
 
-# Initial Data Exploration
+## [Initial Data Exploration]{style="color:red"}
 
 ```{r}
 library(tidyverse)
@@ -140,7 +139,7 @@ GLOBAL_TOP_10 |>
     formatRound(c('Weekly Hours Viewed', 'Weekly Views'))
 ```
 
-## The Big Questions
+## [The Big Questions]{style="color:red"}
 
 ### 1. How many different countries does Netflix operate in? (You can use the viewing history as a proxy for countries in which Netflix operates.)?
 
@@ -186,13 +185,27 @@ Longest film `r paste0("<span style='color:red;'>", longest_film$show_title, "</
 ### 4. For each of the four categories, what program has the most total hours of global viewership?
 
 ```{r}
+library(dplyr)
+library(DT)
+
 top_by_category <- GLOBAL_TOP_10 |>
   group_by(category, show_title) |>
-  summarise(total_hours = sum(weekly_hours_viewed, na.rm = TRUE), .groups = 'drop') |>
+  summarise(
+    total_hours = sum(weekly_hours_viewed, na.rm = TRUE),
+    .groups = "drop"
+  ) |>
   group_by(category) |>
   slice_max(total_hours, n = 1)
 
-print(top_by_category)
+# Format for display
+top_by_category |>
+  arrange(desc(total_hours)) |>
+  datatable(
+    options = list(searching = FALSE, info = FALSE, pageLength = 10),
+    rownames = FALSE
+  ) |>
+  formatRound("total_hours", digits = 0)
+
 ```
 
 The `r paste0("<span style='color:red;'>", "single top program overall", "</span>")` across all categories is `r paste0("<span style='color:red;'>", top_by_category$show_title[4], "</span>")` with over `r paste0("<span style='color:red;'>", top_by_category$total_hours[4], " billion hours</span>")` of viewership.
@@ -211,7 +224,7 @@ longest_run <- COUNTRY_TOP_10 |>
     slice(1)
 ```
 
-`r longest_run$season_title` achieved the longest Top 10 run of any TV show, spending `r longest_run$max_weeks` consecutive weeks in `r longest_run$country_name` Top 10.
+[`r longest_run$season_title`]{style="color:red"} achieved the longest Top 10 run of any TV show, spending [`r longest_run$max_weeks`]{style="color:red"} consecutive weeks in `r longest_run$country_name` Top 10.
 
 This gives us insight into which shows have real staying power in specific markets.
 
@@ -253,25 +266,26 @@ squid_game_total <- squid_game_breakdown |>
     )
 ```
 
-`r paste0("Squid Game has been watched for ", squid_game_total$total_hours_billions, " billion hours in total across all seasons.")`
+`r paste0("Squid Game has been watched for, ", "<span style='color:red;'>", squid_game_total$total_hours_billions, "</span> billion hours in total across all seasons.")`
 
 ### 8. The movie Red Notice has a runtime of 1 hour and 58 minutes. Approximately how many views did it receive in 2021?
 
 ```{r}
+# Load required packages
 library(dplyr)
 library(lubridate)
 
-red_notice_2021 <- GLOBAL_TOP_10 |>
-  filter(show_title == "Red Notice", year(week) == 2021) |>
-  summarise(
-    total_views = if(all(is.na(weekly_views))) NA_real_ else sum(weekly_views, na.rm = TRUE)
-  ) |>
-  mutate(
-    views_millions = round(total_views / 1e6, 1)
-  )
+# Calculate estimated views for Red Notice in 2021
+red_notice_2021 <- GLOBAL_TOP_10 %>%
+  filter(str_detect(show_title, "Red Notice"), year(week) == 2021) %>%
+  summarise(total_hours_viewed = sum(weekly_hours_viewed, na.rm = TRUE),
+    .groups = "drop") %>% mutate(
+    # Convert total hours viewed into estimated view counts (in millions)
+    estimated_views_millions = ifelse(total_hours_viewed > 0, round(total_hours_viewed / (118 / 60) / 1e6, 1),NA_real_))
+
 ```
 
-`r if(is.na(red_notice_2021$views_millions)) {       "Red Notice data not available for 2021"     } else {       paste0("Red Notice had ", red_notice_2021$views_millions, " million views in 2021")     }`
+`r paste0("Estimated views for Red Notice in 2021: ", red_notice_2021$estimated_views_millions, " million")`
 
 ### 9. How many Films reached Number 1 in the US but did not originally debut there? That is, find films that first appeared on the Top 10 chart at, e.g., Number 4 but then became more popular and eventually hit Number 1? What is the most recent film to pull this off?
 
@@ -282,20 +296,22 @@ us_number_ones <- COUNTRY_TOP_10 |>
     distinct(show_title)
 
 climbing_films <- COUNTRY_TOP_10 |>
-    filter(country_name == "United States" & str_detect(category, "Films")) |>
-    filter(show_title %in% us_number_ones$show_title) |>
-    group_by(show_title) |>
-    arrange(week) |>
-    summarise(
-        first_rank = first(weekly_rank),
-        hit_number_1 = any(weekly_rank == 1),
-        latest_week = max(week[weekly_rank == 1], na.rm = TRUE),
-        .groups = 'drop'
-    ) |>
-    filter(first_rank > 1 & hit_number_1) |>
-    arrange(desc(latest_week))
+  filter(country_name == "United States", str_detect(category, "Films")) |>
+  group_by(show_title) |>
+  arrange(week) |>
+  summarise(
+    first_rank   = first(weekly_rank),
+    hit_number_1 = any(weekly_rank == 1),
+    latest_week  = if (any(weekly_rank == 1)) max(week[weekly_rank == 1]) else as.Date(NA),
+    .groups = "drop"
+  ) |>
+  filter(first_rank > 1 & hit_number_1) |>
+  arrange(desc(latest_week))
 
-print(climbing_films)
+# Table output
+climbing_films |>
+  datatable(options = list(searching = FALSE, info = FALSE, pageLength = 10)) |> formatRound("first_rank", 0)
+
 ```
 
 In the United States, `r paste0("<span style='color:red;'>", nrow(climbing_films), "</span>")` films reached Number 1 on the Top 10 chart without originally debuting there, and the most recent film to do so was `r paste0("<span style='color:red;'>", climbing_films$show_title[1], "</span>")`.
@@ -305,23 +321,31 @@ This shows how word-of-mouth and social media buzz can turn a slow starter into 
 ### 10. Which TV show/season hit the top 10 in the most countries in its debut week? In how many countries did it chart?
 
 ```{r}
-international_debuts <- COUNTRY_TOP_10 |>
-    filter(str_detect(category, "TV")) |>
-    group_by(show_title, season_title) |>
-    arrange(week) |>
-    slice(1) |>  # Get debut week
-    ungroup() |>
-    group_by(show_title, season_title, week) |>
-    summarise(countries_charted = n_distinct(country_name), .groups = 'drop') |>
-    arrange(desc(countries_charted)) |>
-    slice(1)
+library(dplyr)
+library(stringr)
 
-print(international_debuts)
+international_debuts <- COUNTRY_TOP_10 %>%
+  filter(str_detect(category, "TV")) %>%
+  group_by(show_title, season_title) %>%
+  summarise(first_week = min(week), .groups = "drop") %>%
+  inner_join(COUNTRY_TOP_10, 
+             by = c("show_title", "season_title", "first_week" = "week")) %>%
+  group_by(show_title, season_title, first_week) %>%
+  summarise(countries_charted = n_distinct(country_name), .groups = "drop") %>%
+  arrange(desc(countries_charted)) %>%
+  slice(1)
+
+# Table output
+international_debuts %>%
+  datatable(options = list(searching = FALSE, info = FALSE, pageLength = 10)) %>%
+  formatRound("countries_charted", 0)
 ```
+
+In its debut week, <span style='color:red;'>`r international_debuts$countries_charted`</span> countries featured `r paste0("<span style='color:red;'>", international_debuts$show_title, ": ", international_debuts$season_title, "</span>")` in their Top 10 charts.
 
 The show that managed to chart in the most countries right out of the gate demonstrates Netflix's global distribution power.
 
-## Writing Press Releases Based on the Data
+## [Writing Press Releases Based on the Data]{style="color:red"}
 
 ### Press Release 1: Upcoming Season of Stranger Things
 
@@ -330,165 +354,201 @@ The show that managed to chart in the most countries right out of the gate demon
 Netflix today confirmed that the upcoming fifth season of its hit series Stranger Things will mark the conclusion of one of the platform’s most successful franchises. Since its debut in 2016, Stranger Things has grown beyond a television series to become a cultural touchstone, captivating audiences worldwide.
 
 ```{r}
-stranger_things_stats <- GLOBAL_TOP_10 |>
-    filter(str_detect(show_title, "Stranger Things")) |>
-    group_by(season_title) |>
-    summarise(
-        total_hours = sum(weekly_hours_viewed, na.rm = TRUE),
-        max_weeks_top10 = max(cumulative_weeks_in_top_10, na.rm = TRUE),
-        .groups = 'drop'
-    ) |>
-    summarise(
-        total_viewership = sum(total_hours),
-        viewership_billions = round(sum(total_hours) / 1e9, 2)
-    )
 
-stranger_things_countries <- COUNTRY_TOP_10 |>
-    filter(str_detect(show_title, "Stranger Things")) |>
-    summarise(countries_reached = n_distinct(country_name))
+# Stranger Things statistics
+stranger_things_stats <- GLOBAL_TOP_10 %>%
+  filter(str_detect(show_title, "Stranger Things")) %>%
+  group_by(season_title) %>%
+  summarise(
+    total_hours = sum(weekly_hours_viewed, na.rm = TRUE),
+    max_weeks_top10 = max(cumulative_weeks_in_top_10, na.rm = TRUE),
+    .groups = 'drop'
+  ) %>%
+  summarise(
+    total_viewership = sum(total_hours),
+    viewership_billions = round(sum(total_hours) / 1e9, 2)
+  )
+
+stranger_things_countries <- COUNTRY_TOP_10 %>%
+  filter(str_detect(show_title, "Stranger Things")) %>%
+  summarise(countries_reached = n_distinct(country_name))
+
+# Season-by-season breakdown
+st_by_season <- GLOBAL_TOP_10 %>%
+  filter(str_detect(show_title, "Stranger Things")) %>%
+  group_by(season_title) %>%
+  summarise(
+    total_hours = sum(weekly_hours_viewed, na.rm = TRUE),
+    max_weeks = max(cumulative_weeks_in_top_10, na.rm = TRUE),
+    .groups = 'drop'
+  ) %>%
+  filter(!is.na(season_title)) %>%
+  arrange(season_title)
+
+# Table output
+st_by_season %>%
+  datatable(options = list(searching = FALSE, info = FALSE, pageLength = 10)) %>%
+  formatRound(c("total_hours", "max_weeks"), 0)
 ```
 
-According to Netflix’s global viewing data, the series has generated approximately [`r stranger_things_stats$viewership_billions`]{style="color:red;"} **billion total viewing hours** across its four released seasons and reached audiences in `r stranger_things_countries$countries_reached` **countries**. Unlike most serialized programs that decline in popularity after early peaks, Stranger Things has maintained long-term engagement, regularly appearing in Netflix’s Global Top 10 rankings over multiple years.
+According to Netflix’s global viewing data, the series has generated approximately [`r stranger_things_stats$viewership_billions`]{style="color:red;"} **billion total viewing hours** across its four released seasons and reached audiences in [`r stranger_things_countries$countries_reached`]{style="color:red"} **countries**. Unlike most serialized programs that decline in popularity after early peaks, Stranger Things has maintained long-term engagement, regularly appearing in Netflix’s Global Top 10 rankings over multiple years.
 
-From a data perspective, the longevity of *Stranger Things* is particularly noteworthy. Most serialized television experiences a steep decline in viewership after initial release peaks. In contrast, this series has consistently appeared in Netflix’s global “Top 10” rankings over multiple years, signaling an unusual level of audience loyalty and sustained cultural relevance.
-
-“Stranger Things is more than a story about Hawkins — it’s a story that connected generations and cultures,” said \[Insert Netflix Executive Quote\]. “The final season represents not only the closing chapter of this incredible narrative but also a moment to celebrate the lasting impact the show has had on fans everywhere.”
+From a data perspective, the longevity of *Stranger Things* is particularly noteworthy. Most serialized television experiences a steep decline in viewership after initial release peaks. In contrast, this series has consistently appeared in Netflix’s global “Top 10” rankings over multiple years, signaling an unusual level of audience loyalty and sustained cultural relevance.
 
 Analysts point to three factors behind the show’s sustained success:
 
--   **High Retention:** Each new season sparked renewed spikes in viewership rather than a single early peak.
+-   **High Retention:** Each new season sparked renewed spikes in viewership rather than a single early peak.
 
--   **Global Reach:** With consistent performance across diverse markets, the series demonstrated cross-cultural appeal.
+-   **Global Reach:** With consistent performance across diverse markets, the series demonstrated cross-cultural appeal.
 
--   **Platform Strategy:** Netflix’s binge-release model encouraged high-volume viewing while building brand loyalty.
+-   **Platform Strategy:** Netflix’s binge-release model encouraged high-volume viewing while building brand loyalty.
 
-The final season of Stranger Things will premiere in \[Insert Year\]. For Netflix, this marks a pivotal milestone: proof that streaming originals can achieve not only critical acclaim but also global cultural permanence.
+The final season of Stranger Things will premiere in 2025. For Netflix, this marks a pivotal milestone proof that streaming originals can achieve not only critical acclaim but also global cultural permanence.
 
-Press Release 2: Netflix's India Strategy Actually Works
+### Press Release 2: Netflix's India Strategy Actually Works
 
 **Netflix’s Hindi Originals Drive Subscriber Growth in India**
 
-Netflix today announced that its investment in Hindi-language content has fueled significant subscriber growth in India, one of the company’s fastest-expanding markets. Over the past two years, Netflix’s Indian subscriber base has grown from an estimated 15 million to more than 25 million, underscoring the value of local programming tailored to cultural preferences.
+Netflix today announced that its investment in Hindi-language content has fueled significant subscriber growth in India, one of the company's fastest-expanding markets. Over the past two years, Netflix's Indian subscriber base has grown from an estimated 15 million to more than 25 million, underscoring the value of local programming tailored to cultural preferences.
 
 ```{r}
-# Looking at Hindi content performance in India specifically
-hindi_content <- COUNTRY_TOP_10 %>%
-  filter(country_name == "India", str_detect(show_title, "Hindi")) %>%
-  group_by(show_title) %>%
-  summarise(weeks_in_top10 = max(cumulative_weeks_in_top_10, na.rm = TRUE), .groups = 'drop') %>%
-  arrange(desc(weeks_in_top10))
-
-plot_ly(
-  hindi_content %>% slice_head(n = 10),
-  x = ~reorder(show_title, -weeks_in_top10),
-  y = ~weeks_in_top10,
-  type = 'bar',
-  marker = list(color = '#E50914'),
-  text = ~weeks_in_top10,
-  hoverinfo = 'text+y'
-) %>%
-  layout(
-    title = "Top Hindi Programs in India",
-    xaxis = list(title = "", tickangle = -45),
-    yaxis = list(title = "Weeks in Top 10"),
-    margin = list(b = 150)
+# Analyze Hindi content dominance in India's Top 10
+hindi_india_analysis <- COUNTRY_TOP_10 %>%
+  filter(country_name == "India") %>%
+  mutate(
+    is_hindi = str_detect(show_title, "Hindi|Bollywood") | 
+               str_detect(tolower(show_title), "desi|indian"),
+    language_category = case_when(
+      is_hindi ~ "Hindi Content",
+      TRUE ~ "Other Content"
+    )
+  ) %>%
+  group_by(language_category) %>%
+  summarise(
+    total_weeks = sum(cumulative_weeks_in_top_10, na.rm = TRUE),
+    unique_titles = n_distinct(show_title),
+    avg_weeks_per_title = total_weeks / unique_titles,
+    .groups = 'drop'
   )
+
+# Print key statistics
+hindi_india_analysis %>%
+datatable(options = list(searching = FALSE, info = FALSE, pageLength = 10)) %>%
+  formatRound(c("total_weeks", "unique_titles", "avg_weeks_per_title"), 0)
+
 ```
 
-Data from Netflix’s Top 10 charts shows that Hindi-language series consistently dominate in India while rarely appearing in U.S. rankings. This localized success highlights a deliberate strategy: producing authentic, market-specific stories rather than relying on globally standardized content.
+Data from Netflix's Top 10 charts reveals the remarkable success of this localized strategy. Hindi-language content has accumulated [`r hindi_india_analysis$total_weeks[1]`]{style="color:red"} weeks in India's Top 10 rankings across just [`r hindi_india_analysis$unique_titles[1]`]{style="color:red"} unique titles, demonstrating exceptional staying power with an average of [`r hindi_india_analysis$avg_weeks_per_title[1]`]{style="color:red"} weeks per title. In contrast, other content averages only [`r hindi_india_analysis$avg_weeks_per_title[2]`]{style="color:red"} weeks per title despite having significantly more titles in rotation (1,109 titles).
 
-“Our Hindi originals demonstrate that audiences in India are eager for stories that reflect their lives, languages, and communities,” said \[Insert Netflix India Executive Quote\]. “By investing in local creators, we’re building a sustainable growth model and establishing Netflix as the home for India’s most compelling entertainment.”
+```{r}
+# Top performing Hindi titles
+top_hindi_shows <- COUNTRY_TOP_10 %>%
+  filter(country_name == "India", str_detect(show_title, "Hindi")) %>%
+  group_by(show_title) %>%
+  summarise(
+    weeks_in_top10 = max(cumulative_weeks_in_top_10, na.rm = TRUE),
+    .groups = 'drop'
+  ) %>%
+  arrange(desc(weeks_in_top10)) %>%
+  slice_head(n = 10)
 
-Industry analysts note that this approach offers two key competitive advantages:
+# Print key statistics
+top_hindi_shows %>%
+datatable(options = list(searching = FALSE, info = FALSE, pageLength = 10)) %>%
+  formatRound(c("weeks_in_top10"), 0)
+```
+Top-performing Hindi titles have become cultural phenomena in India:
+
+-   **`r top_hindi_shows$show_title[1]`** dominated the charts for an unprecedented [`r top_hindi_shows$weeks_in_top10[1]`]{style="color:red"} weeks
+-   **`r top_hindi_shows$show_title[2]`** maintained Top 10 status for [`r top_hindi_shows$weeks_in_top10[2]`]{style="color:red"} weeks
+-   **`r top_hindi_shows$show_title[3]`** and **`r top_hindi_shows$show_title[4]`** each captured audiences for 7 weeks
+-   Blockbusters like **Leo, Raw, GodFather, Guntur Kaaram**, and **Thunivu (all Hindi versions)** sustained 5-6 week runs
+
+The numbers tell a compelling story: Hindi content represents a disproportionately small fraction of available titles but generates exceptional engagement. With 43 Hindi titles achieving [`r hindi_india_analysis$total_weeks[1]`]{style="color:red"} cumulative weeks in the Top 10, these programs deliver 37% more staying power per title compared to the broader content library—a clear indicator of audience preference and strategic success. Industry analysts note that this approach offers two key competitive advantages:
 
 -   **Market Differentiation:** By prioritizing original Hindi programming, Netflix stands apart from competitors that focus on dubbed or imported content.
 -   **Scalable Growth:** Success in India positions Netflix to replicate similar local-first strategies in other emerging markets.
 
-With India projected to remain a critical driver of subscriber additions in the coming years, Netflix’s investment in Hindi-language storytelling underscores its long-term commitment to regional markets and cultural authenticity.
+With India projected to remain a critical driver of subscriber additions in the coming years, Netflix's investment in Hindi-language storytelling underscores its long-term commitment to regional markets and cultural authenticity. The data validates what audiences have been showing through their viewing habits: when entertainment speaks their language and tells their stories, they engage more deeply and stay longer.
 
 ### Press Release 3: Non-English Content Isn't Niche Anymore
 
 **When Subtitles Stop Being a Barrier**
 
-Netflix today reported that non-English programming now accounts for more than **40% of global viewing hours**, marking a dramatic shift in entertainment consumption patterns worldwide. Once considered niche, non-English titles such as Korean dramas, Spanish thrillers, and Hindi films have become mainstream favorites for audiences across continents.
+Netflix today reported that non-English programming now accounts for more than **40% of global viewing hours**, marking a dramatic shift in entertainment consumption patterns worldwide. Once considered niche, non-English titles such as Korean dramas, Spanish thrillers, and Hindi films have become mainstream favorites for audiences across continents.
 
 ```{r}
-# Track growth of international content year over year
+
+library(dplyr)
+library(lubridate)
+library(stringr)
+library(tibble)
+
+# Year-over-Year Growth of Non-English Content
 international_growth <- GLOBAL_TOP_10 %>%
   filter(str_detect(category, "Non-English")) %>%
   mutate(year = year(week)) %>%
   group_by(year) %>%
-  summarise(total_hours = sum(weekly_hours_viewed, na.rm = TRUE), .groups = 'drop')
-
-plot_ly(
-  international_growth,
-  x = ~year,
-  y = ~total_hours / 1e9,
-  type = 'scatter',
-  mode = 'lines+markers',
-  line = list(color = '#E50914', width = 4),
-  text = ~paste(round(total_hours / 1e9, 1), "B hours"),
-  hoverinfo = 'text+y'
-) %>%
-  layout(
-    title = "Growth of Non-English Content",
-    xaxis = list(title = "Year"),
-    yaxis = list(title = "Total Hours Viewed (Billions)"),
-    margin = list(b = 50)
+  summarise(
+    total_hours = sum(weekly_hours_viewed, na.rm = TRUE),
+    unique_titles = n_distinct(show_title),
+    avg_hours_per_title = total_hours / unique_titles,
+    .groups = "drop"
+  ) %>%
+  mutate(
+    growth_rate = (total_hours / lag(total_hours) - 1) * 100,
+    total_hours_billions = total_hours / 1e9
   )
+
+# Output results
+international_growth %>%
+datatable(options = list(searching = FALSE, info = FALSE, pageLength = 10)) %>%
+  formatRound(c("total_hours", "unique_titles", "avg_hours_per_title", "growth_rate"), 1)
 ```
+The data shows a decisive upward trajectory for international content:
 
-Year-over-year data highlights explosive growth: the number of international titles has expanded to over **2,500**, spanning **35 producing countries** and **45 languages**, with **180 cross-cultural hits** achieving global recognition.
+- 2021: [`r paste0(round(international_growth$total_hours[1] / 1e9, 1), " billion")`]{style="color:red"} hours viewed across 171 titles
+- 2022: [`r paste0(round(international_growth$total_hours[2] / 1e9, 1), " billion")`]{style="color:red"} hours (+64%) across 356 titles
+- 2023: [`r paste0(round(international_growth$total_hours[3] / 1e9, 1), " billion")`]{style="color:red"} hours (+0.9%) across 382 titles
+- 2024: [`r paste0(round(international_growth$total_hours[4] / 1e9, 1), " billion")`]{style="color:red"} hours (–7%) across 394 titles
+- 2025: [`r paste0(round(international_growth$total_hours[5] / 1e9, 1), " billion")`]{style="color:red"} hours (–21%) across 268 titles
 
-“Audiences today are embracing stories from around the world in ways we’ve never seen before,” said \[Insert Netflix Content Executive Quote\]. “Our job is to make great local stories available everywhere, and increasingly those stories are finding fans far beyond their home markets.”
+Even with the moderation in 2024–2025, the long-term shift is clear: non-English programming has become a cornerstone of Netflix’s global Top 10.
 
-Analysts attribute the trend to Netflix’s recommendation algorithms, which introduce subscribers to content they might not have previously considered. By promoting localized hits internationally, the platform has redefined how entertainment is distributed and consumed.
+Despite rapid expansion in catalog size, audience appetite remains strong. In 2021, non-English titles averaged 48.4 million hours viewed per title. By 2023, that figure was 35.9 million hours per title, evidence that growth in volume has not diluted audience engagement.
 
-The rise of non-English content has major business implications:
-
--   **Diversified Growth:** Reliance on global hits reduces risk compared to single-region blockbusters.
-
--   **Algorithmic Advantage:** Netflix’s data-driven curation ensures strong titles can scale rapidly across markets.
-
--   **Cultural Exchange:** Subtitled and dubbed formats normalize cross-cultural viewing, expanding audience horizons.
-
-    This shift positions Netflix not only as a streaming service but also as a global hub for cultural storytelling, reshaping the very definition of mainstream entertainment.
 
 ```{r}
-impact_metrics <- tibble(
-  Metric = c("International Titles", "Countries Producing", "Languages Featured", "Cross-Cultural Hits"),
-  Current = c(2500, 35, 45, 180),
-  Growth_Percent = c(340, 150, 200, 400)
-)
+# Top Non-English Titles by Hours Viewed
+cross_regional_hits <- GLOBAL_TOP_10 %>%
+  filter(str_detect(category, "Non-English")) %>%
+  group_by(show_title) %>%
+  summarise(
+    total_hours = sum(weekly_hours_viewed, na.rm = TRUE),
+    weeks_on_chart = n_distinct(week),
+    .groups = "drop"
+  ) %>%
+  arrange(desc(total_hours)) %>%
+  slice_head(n = 15)
 
-plot_ly(
-  impact_metrics,
-  x = ~Metric,
-  y = ~Current,
-  type = 'bar',
-  text = ~paste(Current, "<br>+", Growth_Percent, "% growth"),
-  textposition = 'outside',
-  marker = list(color = '#E50914')
-) %>%
-  layout(
-    title = list(
-      text = "Impact of International Content<br><sup>Key Metrics and Growth</sup>",
-      x = 0.5
-    ),
-    yaxis = list(title = "Count"),
-    xaxis = list(title = "")
-  )
+cross_regional_hits %>%
+datatable(options = list(searching = FALSE, info = FALSE, pageLength = 10)) %>%
+  formatRound(c("total_hours", "weeks_on_chart"), 0)
 ```
 
+### Top Global Performers
+
+Some shows have set unprecedented benchmarks for cross-border popularity:
+
+- `r cross_regional_hits$show_title[1]` (South Korea) – 5.05 billion hours over 42 weeks
+- `r cross_regional_hits$show_title[2]` (Spain) – 1.19 billion hours across 16 weeks
+- `r cross_regional_hits$show_title[3]` (Colombia) – 813 million hours across 28 weeks
+- `r cross_regional_hits$show_title[4]` (South Korea) – 662 million hours in 21 weeks
+- `r cross_regional_hits$show_title[5]`(South Korea) – 659 million hours across 11 weeks
+
+Analysts attribute the rise to Netflix’s recommendation algorithms, which seamlessly introduce subscribers to content outside their home language. By promoting localized hits internationally, Netflix has redefined how entertainment is distributed and consumed. Netflix is no longer just a streaming service—it is a global hub for cultural storytelling, proving what the industry has long suspected: great stories transcend language.
+
 ## What This All Means
-
-Looking at this data, three things stand out:
-
-1.  **Stranger Things proves Netflix can create genuine cultural phenomena** - not just popular shows, but things that become part of how people talk and think about entertainment.
-
-2.  **The India strategy shows that local investment actually works** - rather than just dubbing American content, creating authentic local programming builds real market share.
-
-3.  **Non-English content has gone mainstream** - what used to be a niche preference is now driving nearly half of global viewing hours.
 
 The implications for Netflix's business model are pretty significant. Instead of the old Hollywood approach of making big-budget universal content, they've figured out how to make targeted content that can find global audiences through algorithms and word-of-mouth.
 
