@@ -333,6 +333,7 @@ datatable(climbing_films,
   formatRound("debut_rank", 0) %>%
   formatRound("weeks_to_1", 1)
 ```
+
 In the United States, `r paste0("<span style='color:red;'>", nrow(climbing_films), "</span>")` films reached Number 1 on the Top 10 chart without originally debuting there, and the most recent film to do so was `r paste0("<span style='color:red;'>", climbing_films$show_title[1], "</span>")`.
 
 This shows how word-of-mouth and social media buzz can turn a slow starter into a massive hit.
