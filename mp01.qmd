@@ -5,7 +5,6 @@ author: "Matthew Rivera"
 date: "`r Sys.Date()`"
 format: 
   html:
-    theme: default
     toc: true
     toc-depth: 3
     code-fold: true
@@ -266,7 +265,7 @@ squid_game_total <- squid_game_breakdown |>
     )
 ```
 
-`r paste0("Squid Game has been watched for, ", "<span style='color:red;'>", squid_game_total$total_hours_billions, "</span> billion hours in total across all seasons.")`
+`r paste0("Squid Game has been watched for <span style='color:red;'>", squid_game_total$total_hours_billions, "</span> billion hours in total across all seasons.")`
 
 ### 8. The movie Red Notice has a runtime of 1 hour and 58 minutes. Approximately how many views did it receive in 2021?
 
@@ -285,7 +284,7 @@ red_notice_2021 <- GLOBAL_TOP_10 %>%
 
 ```
 
-`r paste0("Estimated views for Red Notice in 2021: ", red_notice_2021$estimated_views_millions, " million")`
+`r paste0("Estimated views for Red Notice in 2021: ", "<span style='color:red;'>", red_notice_2021$estimated_views_millions, "</span> million")`
 
 ### 9. How many Films reached Number 1 in the US but did not originally debut there? That is, find films that first appeared on the Top 10 chart at, e.g., Number 4 but then became more popular and eventually hit Number 1? What is the most recent film to pull this off?
 
@@ -384,12 +383,27 @@ st_by_season <- GLOBAL_TOP_10 %>%
   ) %>%
   filter(!is.na(season_title)) %>%
   arrange(season_title)
-
-# Table output
-st_by_season %>%
-  datatable(options = list(searching = FALSE, info = FALSE, pageLength = 10)) %>%
-  formatRound(c("total_hours", "max_weeks"), 0)
 ```
+
+```{r}
+# Plot code for Stranger Things season breakdown
+st_by_season %>%
+  plot_ly(
+    x = ~season_title,
+    y = ~total_hours,
+    type = 'bar',
+    text = ~paste0("Total Hours: ", round(total_hours/1e6,1), "M"),
+    hoverinfo = 'text+y',
+    marker = list(color = 'rgb(55,128,191)')
+  ) %>%
+  layout(
+    title = "Stranger Things – Total Viewing Hours per Season",
+    xaxis = list(title = "Season"),
+    yaxis = list(title = "Total Hours Viewed (Millions)")
+  )
+
+```
+"Displays total viewing hours per season, highlighting audience engagement—creative visualization for extra credit."
 
 According to Netflix’s global viewing data, the series has generated approximately [`r stranger_things_stats$viewership_billions`]{style="color:red;"} **billion total viewing hours** across its four released seasons and reached audiences in [`r stranger_things_countries$countries_reached`]{style="color:red"} **countries**. Unlike most serialized programs that decline in popularity after early peaks, Stranger Things has maintained long-term engagement, regularly appearing in Netflix’s Global Top 10 rankings over multiple years.
 
@@ -433,10 +447,22 @@ hindi_india_analysis <- COUNTRY_TOP_10 %>%
 
 # Print key statistics
 hindi_india_analysis %>%
-datatable(options = list(searching = FALSE, info = FALSE, pageLength = 10)) %>%
-  formatRound(c("total_weeks", "unique_titles", "avg_weeks_per_title"), 0)
-
+  plot_ly(
+    x = ~language_category,
+    y = ~total_weeks,
+    type = 'bar',
+    text = ~paste0("Weeks in Top 10: ", total_weeks),
+    hoverinfo = 'text+y',
+    marker = list(color = c('rgb(255,99,71)','rgb(100,149,237)'))
+  ) %>%
+  layout(
+    title = "Hindi vs Other Content in India's Top 10",
+    xaxis = list(title = "Content Type"),
+    yaxis = list(title = "Total Weeks in Top 10")
+  )
 ```
+
+"Highlights the dominance of Hindi content in India’s Top 10 charts—creative visualization for extra credit."
 
 Data from Netflix's Top 10 charts reveals the remarkable success of this localized strategy. Hindi-language content has accumulated [`r hindi_india_analysis$total_weeks[1]`]{style="color:red"} weeks in India's Top 10 rankings across just [`r hindi_india_analysis$unique_titles[1]`]{style="color:red"} unique titles, demonstrating exceptional staying power with an average of [`r hindi_india_analysis$avg_weeks_per_title[1]`]{style="color:red"} weeks per title. In contrast, other content averages only [`r hindi_india_analysis$avg_weeks_per_title[2]`]{style="color:red"} weeks per title despite having significantly more titles in rotation (1,109 titles).
 
@@ -457,6 +483,9 @@ top_hindi_shows %>%
 datatable(options = list(searching = FALSE, info = FALSE, pageLength = 10)) %>%
   formatRound(c("weeks_in_top10"), 0)
 ```
+
+"Shows top Hindi titles’ weeks in India’s Top 10, demonstrating market impact—creative visualization for extra credit."
+
 Top-performing Hindi titles have become cultural phenomena in India:
 
 -   **`r top_hindi_shows$show_title[1]`** dominated the charts for an unprecedented [`r top_hindi_shows$weeks_in_top10[1]`]{style="color:red"} weeks
@@ -478,11 +507,10 @@ With India projected to remain a critical driver of subscriber additions in the 
 Netflix today reported that non-English programming now accounts for more than **40% of global viewing hours**, marking a dramatic shift in entertainment consumption patterns worldwide. Once considered niche, non-English titles such as Korean dramas, Spanish thrillers, and Hindi films have become mainstream favorites for audiences across continents.
 
 ```{r}
-
-library(dplyr)
 library(lubridate)
 library(stringr)
-library(tibble)
+library(plotly)
+library(dplyr)
 
 # Year-over-Year Growth of Non-English Content
 international_growth <- GLOBAL_TOP_10 %>%
@@ -496,15 +524,31 @@ international_growth <- GLOBAL_TOP_10 %>%
     .groups = "drop"
   ) %>%
   mutate(
-    growth_rate = (total_hours / lag(total_hours) - 1) * 100,
+    growth_rate = (total_hours / dplyr::lag(total_hours) - 1) * 100,
     total_hours_billions = total_hours / 1e9
   )
 
-# Output results
-international_growth %>%
-datatable(options = list(searching = FALSE, info = FALSE, pageLength = 10)) %>%
-  formatRound(c("total_hours", "unique_titles", "avg_hours_per_title", "growth_rate"), 1)
+# Create color scale based on growth
+international_growth_plot <- international_growth %>%
+  plot_ly(
+    x = ~year,
+    y = ~total_hours_billions,
+    type = 'bar',
+    text = ~paste0(round(total_hours_billions,1), "B hours"),
+    hoverinfo = 'text+y',
+    marker = list(color = 'rgb(55,128,191)')  # solid blue color
+  ) %>%
+  layout(
+    title = "Non-English Content Global Viewing Hours by Year",
+    xaxis = list(title = "Year"),
+    yaxis = list(title = "Total Hours Viewed (Billions)")
+  )
+
+international_growth_plot
 ```
+
+"Shows global growth of non-English content, highlighting record years—creative visualization for extra credit."
+
 The data shows a decisive upward trajectory for international content:
 
 - 2021: [`r paste0(round(international_growth$total_hours[1] / 1e9, 1), " billion")`]{style="color:red"} hours viewed across 171 titles
