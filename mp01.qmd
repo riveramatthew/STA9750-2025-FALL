@@ -1,5 +1,5 @@
 ---
-title: "Mini-Project 01 – Netflix Top 10 EDA"
+title: "Mini-Project 01: Gourmet Cheeseburgers Across the Globe"
 subtitle: "Exploring the Most Popular Programming on Netflix"
 author: "Matthew Rivera"
 date: "`r Sys.Date()`"
@@ -36,7 +36,7 @@ if(!dir.exists(file.path("data", "mp01"))){
 }
 
 # Getting the global data
-GLOBAL_TOP_10_FILENAME <- file.path("data", "mp01", "global_top10_alltime.tsv")
+GLOBAL_TOP_10_FILENAME <- file.path("data", "mp01", "global_top10_alltime.csv")
 
 if(!file.exists(GLOBAL_TOP_10_FILENAME)){
     download.file("https://www.netflix.com/tudum/top10/data/all-weeks-global.tsv", 
@@ -44,10 +44,11 @@ if(!file.exists(GLOBAL_TOP_10_FILENAME)){
 }
 
 # And the country-specific data
-COUNTRY_TOP_10_FILENAME <- file.path("data", "mp01", "country_top10_alltime.tsv")
+COUNTRY_TOP_10_FILENAME <- file.path("data", "mp01", "country_top10_alltime.csv")
 
 if(!file.exists(COUNTRY_TOP_10_FILENAME)){
-    download.file("https://www.netflix.com/tudum/top10/data/all-weeks-countries.tsv", destfile=COUNTRY_TOP_10_FILENAME)
+    download.file("https://www.netflix.com/tudum/top10/data/all-weeks-countries.tsv", 
+                  destfile=COUNTRY_TOP_10_FILENAME)
 }
 ```
 
@@ -59,8 +60,15 @@ library(readr)
 library(dplyr)
 
 # Import the global data
-GLOBAL_TOP_10 <- read_tsv(GLOBAL_TOP_10_FILENAME, show_col_types = FALSE)
+GLOBAL_TOP_10 <- read_tsv(GLOBAL_TOP_10_FILENAME)
+```
 
+```{r}
+# Take a look at what we're working with
+str(GLOBAL_TOP_10)
+```
+
+```{r}
 # Take a look at what we're working with
 glimpse(GLOBAL_TOP_10)
 ```
@@ -69,11 +77,18 @@ glimpse(GLOBAL_TOP_10)
 
 ```{r}
 # Fix those pesky "N/A" strings
-GLOBAL_TOP_10 <- GLOBAL_TOP_10 |>
-    mutate(season_title = if_else(season_title == "N/A", NA_character_, season_title))
+GLOBAL_TOP_10 <- GLOBAL_TOP_10 %>%
+  mutate(season_title = if_else(season_title == "N/A" | is.na(season_title), "N/A", season_title))
+```
 
-# Check that it worked
-cat("Season title NA values:", sum(is.na(GLOBAL_TOP_10$season_title)), "out of", nrow(GLOBAL_TOP_10), "rows\n")
+```{r}
+# Check the result
+str(GLOBAL_TOP_10)
+```
+
+```{r}
+# Take a look at what we're working with
+glimpse(GLOBAL_TOP_10)
 ```
 
 ### Task 3: Data Import with Proper NA Handling
@@ -83,6 +98,8 @@ cat("Season title NA values:", sum(is.na(GLOBAL_TOP_10$season_title)), "out of",
 COUNTRY_TOP_10 <- read_tsv(COUNTRY_TOP_10_FILENAME, na = c("", "NA", "N/A"),
                            show_col_types = FALSE)
 
+
+# Example check
 glimpse(COUNTRY_TOP_10)
 ```
 
@@ -109,8 +126,6 @@ format_titles <- function(df){
 
 # Show a sample with better formatting
 GLOBAL_TOP_10 |> 
-    mutate(`runtime_(minutes)` = round(60 * runtime)) |>
-    select(-season_title, -runtime) |>
     format_titles() |>
     head(n=20) |>
     datatable(options=list(searching=FALSE, info=FALSE)) |>
@@ -288,37 +303,36 @@ red_notice_2021 <- GLOBAL_TOP_10 %>%
 ### 9. How many Films reached Number 1 in the US but did not originally debut there? That is, find films that first appeared on the Top 10 chart at, e.g., Number 4 but then became more popular and eventually hit Number 1? What is the most recent film to pull this off?
 
 ```{r}
-# Find films that didn't debut at #1 but eventually got there
-climbing_films <- COUNTRY_TOP_10 |>
-  filter(country_name == "United States", str_detect(category, "Films")) |>
-  group_by(show_title) |>
-  arrange(week) |>
+library(dplyr)
+library(DT)
+library(lubridate)
+
+# Filter US films
+us_films <- COUNTRY_TOP_10 %>%
+  filter(country_name == "United States" & str_detect(category, "Films"))
+
+# Summarize debut, first #1 week, and weeks to #1
+climbing_films <- us_films %>%
+  group_by(show_title) %>%
+  arrange(week) %>%
   summarise(
-    first_rank      = first(weekly_rank),
-    debut_week      = first(week),
-    hit_number_1    = any(weekly_rank == 1),
+    debut_rank = first(weekly_rank),
+    debut_week = first(week),
     first_week_at_1 = if (any(weekly_rank == 1)) min(week[weekly_rank == 1]) else as.Date(NA),
+    weeks_to_1 = if (any(weekly_rank == 1)) as.numeric(difftime(first_week_at_1, debut_week, units = "weeks")) else NA,
+    ever_number_1 = any(weekly_rank == 1),
     .groups = "drop"
-  ) |>
-  # Only keep titles that didn't debut at #1 but reached it later
-  filter(first_rank > 1 & hit_number_1) |>
-  mutate(
-    time_to_1_weeks = as.integer(first_week_at_1 - debut_week) / 7
-  ) |>
+  ) %>%
+  filter(debut_rank > 1 & ever_number_1) %>%
   arrange(desc(first_week_at_1))
 
-# Table output with cleaner columns
-climbing_films |>
-  select(show_title, debut_week, first_rank, first_week_at_1, time_to_1_weeks) |>
-  datatable(
-    options = list(searching = FALSE, info = FALSE, pageLength = 10),
-    colnames = c("Film Title", "Debut Week", "Debut Rank", "First Week at #1", "Weeks to #1")
-  ) |>
-  formatRound("first_rank", 0) |>
-  formatRound("time_to_1_weeks", 0)
-
+# Display table
+datatable(climbing_films,
+          options = list(pageLength = 10, searching = FALSE, info = FALSE)) %>%
+  formatDate(c("debut_week", "first_week_at_1"), method = "toLocaleDateString") %>%
+  formatRound("debut_rank", 0) %>%
+  formatRound("weeks_to_1", 1)
 ```
-
 In the United States, `r paste0("<span style='color:red;'>", nrow(climbing_films), "</span>")` films reached Number 1 on the Top 10 chart without originally debuting there, and the most recent film to do so was `r paste0("<span style='color:red;'>", climbing_films$show_title[1], "</span>")`.
 
 This shows how word-of-mouth and social media buzz can turn a slow starter into a massive hit.
@@ -414,9 +428,7 @@ st_by_season %>%
 
 According to Netflix’s global viewing data, the series has generated approximately [`r stranger_things_stats$viewership_billions`]{style="color:red;"} **billion total viewing hours** across its four released seasons and reached audiences in [`r stranger_things_countries$countries_reached`]{style="color:red"} **countries**. Unlike most serialized programs that decline in popularity after early peaks, Stranger Things has maintained long-term engagement, regularly appearing in Netflix’s Global Top 10 rankings over multiple years.
 
-From a data perspective, the longevity of *Stranger Things* is particularly noteworthy. Most serialized television experiences a steep decline in viewership after initial release peaks. In contrast, this series has consistently appeared in Netflix’s global “Top 10” rankings over multiple years, signaling an unusual level of audience loyalty and sustained cultural relevance.
-
-Analysts point to three factors behind the show’s sustained success:
+From a data perspective, Stranger Things is remarkable for sustaining audience engagement across multiple seasons. Unlike most serialized shows, which experience steep drops after initial peaks, each season generated renewed spikes in viewership, consistently appearing in Netflix’s global “Top 10” rankings. Analysts highlight three key factors behind this sustained success:
 
 -   **High Retention:** Each new season sparked renewed spikes in viewership rather than a single early peak.
 
