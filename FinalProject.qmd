@@ -1,0 +1,1170 @@
+---
+title: "NYC Healthcare Access Disparities Analysis"
+subtitle: "Travel Distances, Health Outcomes, and Healthcare Deserts"
+author: "Analysis"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+# NYC Healthcare Access Analysis
+
+This analysis examines average travel distances to healthcare facilities across NYC boroughs, identifies potential healthcare deserts, and correlates access with health outcomes using 2023 ACS data, NYC FacDB, and CDC PLACES data.
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
+
+# Set Census API key
+tidycensus::census_api_key("c71b785213dc9e92a64a6453a1dc1bf0a47b3594", install = TRUE, overwrite = TRUE)
+
+#' Initialize Data Directory Structure
+initialize_data_directory <- function(base_path = file.path("data", "mp02")) {
+    if (!dir.exists(base_path)) {
+        dir.create(base_path, showWarnings = FALSE, recursive = TRUE)
+    }
+    invisible(NULL)
+}
+
+#' Ensure Package Installation and Loading
+ensure_package <- function(pkg_name) {
+    if (!is.character(pkg_name) || length(pkg_name) != 1) {
+        stop("pkg_name must be a single character string")
+    }
+    
+    options(repos = c(CRAN = "https://cloud.r-project.org"))
+    
+    if (!requireNamespace(pkg_name, quietly = TRUE)) {
+        message(sprintf("Installing package: %s", pkg_name))
+        tryCatch(
+            install.packages(pkg_name),
+            error = function(e) {
+                stop(sprintf("Failed to install package '%s': %s", pkg_name, e$message))
+            }
+        )
+    }
+    
+    success <- suppressPackageStartupMessages(
+        require(pkg_name, character.only = TRUE, quietly = TRUE)
+    )
+    
+    if (!success) {
+        stop(sprintf("Failed to load package: %s", pkg_name))
+    }
+    
+    invisible(NULL)
+}
+
+# Initialize environment
+initialize_data_directory()
+
+# Load required packages with error handling
+required_packages <- c(
+    "tidyverse", "tidycensus", "sf", "glue", 
+    "scales", "viridis", "units", "knitr",
+    "naniar", "e1071", "boot", "spdep",
+    "leaflet", "plotly", "DT", "htmlwidgets",
+    "httr", "jsonlite", "corrplot", "patchwork"
+)
+
+for (pkg in required_packages) {
+    ensure_package(pkg)
+}
+```
+
+# Data Loading Functions
+
+```{r data_functions}
+# Constants
+NYC_COUNTIES <- c("Bronx", "Kings", "New York", "Queens", "Richmond")
+
+# County FIPS to Borough mapping lookup table
+COUNTY_FIPS_TO_BOROUGH <- c(
+    "005" = "The Bronx",
+    "047" = "Brooklyn",
+    "061" = "Manhattan",
+    "081" = "Queens",
+    "085" = "Staten Island"
+)
+
+#' Map Census Tract GEOID to NYC Borough
+tracts_borough <- function(geoid) {
+    if (!is.character(geoid)) {
+        stop("geoid must be a character vector")
+    }
+    county_fips <- stringr::str_sub(geoid, 3, 5)
+    borough <- COUNTY_FIPS_TO_BOROUGH[county_fips]
+    unname(borough)
+}
+
+#' Fetch ACS Data for NYC Census Tracts
+get_acs_nyc <- function(variable, 
+                        year = 2023, 
+                        survey = "acs5",
+                        cache_dir = file.path("data", "mp02")) {
+    
+    stopifnot(
+        "variable must be character" = is.character(variable) && length(variable) == 1,
+        "year must be numeric" = is.numeric(year),
+        "survey must be character" = is.character(survey),
+        "year must be >= 2009" = year >= 2009,
+        "year must be <= current year" = year <= as.integer(format(Sys.Date(), "%Y"))
+    )
+    
+    cache_file <- file.path(cache_dir, glue::glue("{variable}_nyc_tracts_{year}.csv"))
+    
+    if (file.exists(cache_file)) {
+        message(sprintf("Loading cached data: %s", basename(cache_file)))
+        return(readr::read_csv(cache_file, show_col_types = FALSE))
+    }
+    
+    message(sprintf("Fetching %s data from Census API for year %d", variable, year))
+    
+    acs_data <- tryCatch({
+        tidycensus::get_acs(
+            geography = "tract",
+            variables = variable,
+            state = "NY",
+            county = NYC_COUNTIES,
+            year = year,
+            survey = survey,
+            output = "tidy"
+        )
+    }, error = function(e) {
+        stop(sprintf("Failed to fetch ACS data for %s (year %d): %s", 
+                     variable, year, e$message))
+    })
+    
+    cleaned_data <- acs_data |>
+        dplyr::mutate(year = year) |>
+        dplyr::select(GEOID, NAME, estimate, year) |>
+        dplyr::rename(!!variable := estimate)
+    
+    readr::write_csv(cleaned_data, cache_file)
+    message(sprintf("Cached data to: %s", cache_file))
+    
+    return(cleaned_data)
+}
+
+#' Fetch CDC PLACES Health Outcome Data
+get_cdc_places_nyc <- function(year = 2023, cache_dir = file.path("data", "mp02")) {
+    
+    endpoint_map <- list(
+        "2022" = list(base_url = "nw2y-v4gm", data_year = 2020),
+        "2023" = list(base_url = "em5e-5hvn", data_year = 2021),
+        "2024" = list(base_url = "cwsq-ngmh", data_year = 2022)
+    )
+    
+    if (!as.character(year) %in% names(endpoint_map)) {
+        stop(sprintf("Year %d not supported. Use 2022, 2023, or 2024.", year))
+    }
+    
+    map_info <- endpoint_map[[as.character(year)]]
+    base_url <- sprintf("https://data.cdc.gov/resource/%s.json", map_info$base_url)
+    data_year <- map_info$data_year
+    
+    cache_file <- file.path(cache_dir, glue::glue("cdc_places_nyc_{year}.csv"))
+    
+    if (file.exists(cache_file)) {
+        message(sprintf("Loading cached CDC PLACES data (release %d): %s", year, basename(cache_file)))
+        return(readr::read_csv(cache_file, show_col_types = FALSE))
+    }
+    
+    message(sprintf("Fetching CDC PLACES data (release %d, data year %d)...", year, data_year))
+    
+    measures <- c(
+        "DIABETES", "BPHIGH", "CHD", "OBESITY", "STROKE", 
+        "CANCER", "CASTHMA", "COPD", "ACCESS2", "CHECKUP", "DENTAL"
+    )
+    
+    all_data <- list()
+    
+    for (measure in measures) {
+        message(sprintf("Fetching %s...", measure))
+        where_clause <- sprintf("year=%d AND stateabbr='NY' AND measureid='%s'", data_year, measure)
+        query_url <- sprintf("%s?$where=%s&$limit=50000", base_url, URLencode(where_clause, reserved = TRUE))
+        
+        response <- tryCatch({
+            httr::GET(query_url)
+        }, error = function(e) {
+            warning(sprintf("Failed to fetch %s: %s", measure, e$message))
+            return(NULL)
+        })
+        
+        if (is.null(response) || httr::status_code(response) != 200) {
+            warning(sprintf("API request failed for %s", measure))
+            next
+        }
+        
+        raw_content <- httr::content(response, "text", encoding = "UTF-8")
+        data <- tryCatch({
+            jsonlite::fromJSON(raw_content)
+        }, error = function(e) {
+            warning(sprintf("JSON parse failed for %s", measure))
+            return(NULL)
+        })
+        
+        if (is.null(data) || !is.data.frame(data) || nrow(data) == 0) {
+            next
+        }
+        
+        all_data[[measure]] <- data |>
+            select(locationid, data_value) |>
+            rename(GEOID = locationid, !!measure := data_value)
+        
+        message(sprintf("  Retrieved %d records", nrow(all_data[[measure]])))
+    }
+    
+    if (length(all_data) == 0) {
+        stop("No CDC PLACES data retrieved")
+    }
+    
+    places_data <- all_data[[1]]
+    for (i in 2:length(all_data)) {
+        places_data <- full_join(places_data, all_data[[i]], by = "GEOID")
+    }
+    
+    places_data <- places_data |>
+        mutate(
+            across(all_of(measures), ~as.numeric(as.character(.x))),
+            GEOID = as.character(GEOID)
+        ) |>
+        filter(str_starts(GEOID, "360")) |>
+        mutate(county_fips = str_sub(GEOID, 3, 5)) |>
+        filter(county_fips %in% c("005", "047", "061", "081", "085")) |>
+        select(-county_fips)
+    
+    readr::write_csv(places_data, cache_file)
+    message(sprintf("Cached CDC PLACES data for %d tracts", nrow(places_data)))
+    
+    return(places_data)
+}
+
+#' Download and Load NYC Facilities Database
+get_facilities <- function(
+    cache_dir = file.path("data", "mp02"),
+    url = "https://data.cityofnewyork.us/api/views/ji82-xba5/rows.csv?accessType=DOWNLOAD"
+) {
+    
+    cache_file <- file.path(cache_dir, "facdb.csv")
+    
+    if (!file.exists(cache_file)) {
+        message("Downloading NYC Facilities Database...")
+        tryCatch({
+            download.file(url, destfile = cache_file, mode = "wb", quiet = TRUE)
+        }, error = function(e) {
+            stop(sprintf("Failed to download FacDB: %s", e$message))
+        })
+    }
+    
+    raw_data <- readr::read_csv(cache_file, show_col_types = FALSE)
+    
+    facilities <- raw_data |>
+        dplyr::filter(facdomain == "HEALTH AND HUMAN SERVICES") |>
+        dplyr::select(facname, facgroup, boro, nta2020, latitude, longitude, address) |>
+        dplyr::rename(
+            FACNAME = facname, 
+            FACGROUP = facgroup, 
+            Borough = boro, 
+            NTA = nta2020,
+            Latitude = latitude, 
+            Longitude = longitude, 
+            Address = address
+        ) |>
+        dplyr::filter(!is.na(Latitude), !is.na(Longitude)) |>
+        dplyr::mutate(
+            Borough = dplyr::case_when(
+                Borough == "BRONX" ~ "The Bronx",
+                Borough == "BROOKLYN" ~ "Brooklyn",
+                Borough == "QUEENS" ~ "Queens",
+                Borough == "MANHATTAN" ~ "Manhattan",
+                Borough == "STATEN ISLAND" ~ "Staten Island",
+                TRUE ~ NA_character_
+            ),
+            facility_type = dplyr::case_when(
+                str_detect(FACGROUP, regex("hospital", ignore_case = TRUE)) ~ "Hospital",
+                str_detect(FACGROUP, regex("emergency|ER", ignore_case = TRUE)) ~ "Emergency",
+                str_detect(FACGROUP, regex("health center|community health|FQHC|primary care", ignore_case = TRUE)) ~ "Primary Care",
+                str_detect(FACGROUP, regex("urgent care", ignore_case = TRUE)) ~ "Urgent Care",
+                str_detect(FACGROUP, regex("clinic|ambulatory", ignore_case = TRUE)) ~ "Clinic",
+                str_detect(FACGROUP, regex("mental health|behavioral", ignore_case = TRUE)) ~ "Mental Health",
+                str_detect(FACGROUP, regex("dental", ignore_case = TRUE)) ~ "Dental",
+                str_detect(FACGROUP, regex("nursing|senior|adult care", ignore_case = TRUE)) ~ "Long-term Care",
+                TRUE ~ "Other Health Services"
+            )
+        ) |>
+        dplyr::filter(!is.na(Borough))
+    
+    message(sprintf("Loaded %d healthcare facilities", nrow(facilities)))
+    
+    type_summary <- facilities |>
+        count(facility_type) |>
+        arrange(desc(n))
+    print(type_summary)
+    
+    return(facilities)
+}
+
+#' Fetch Census Tract Geometries with Population Data
+get_tracts_sf <- function(
+    year = 2023,
+    cache_dir = file.path("data", "mp02"),
+    target_crs = 2263
+) {
+    
+    cache_file <- file.path(cache_dir, glue::glue("nyc_tracts_sf_{year}.rds"))
+    
+    if (file.exists(cache_file)) {
+        message(sprintf("Loading cached tract geometries"))
+        return(readRDS(cache_file))
+    }
+    
+    message(sprintf("Fetching tract geometries from Census API"))
+    
+    tracts_sf <- tidycensus::get_acs(
+        geography = "tract",
+        variables = c(pop = "B01003_001"),
+        state = "NY",
+        county = NYC_COUNTIES,
+        year = year,
+        survey = "acs5",
+        output = "tidy",
+        geometry = TRUE
+    )
+    
+    tracts_sf <- tracts_sf |>
+        dplyr::mutate(year = year) |>
+        dplyr::select(GEOID, NAME, estimate, year, geometry) |>
+        dplyr::rename(population = estimate) |>
+        dplyr::mutate(borough = tracts_borough(as.character(GEOID))) |>
+        sf::st_transform(crs = target_crs)
+    
+    saveRDS(tracts_sf, cache_file)
+    message(sprintf("Cached %d tracts", nrow(tracts_sf)))
+    
+    return(tracts_sf)
+}
+```
+
+# Load Data
+
+```{r load_data}
+# Load population data
+POPULATION <- get_acs_nyc("B01003_001") |> 
+    dplyr::rename(population = B01003_001) |>
+    dplyr::mutate(borough = tracts_borough(as.character(GEOID)))
+
+# Load facilities with type classification
+FACILITIES <- get_facilities()
+
+# Load tract geometries
+TRACTS_SF <- get_tracts_sf()
+
+# Load CDC PLACES health outcome data
+CDC_PLACES <- get_cdc_places_nyc(year = 2023)
+
+# Merge with TRACTS_SF
+TRACTS_SF <- TRACTS_SF |>
+    left_join(CDC_PLACES, by = "GEOID") |>
+    mutate(
+        DIABETES = as.numeric(DIABETES),
+        BPHIGH = as.numeric(BPHIGH),
+        ACCESS2 = as.numeric(ACCESS2)
+    )
+
+# Data summary
+cat("\n=== DATA LOADING SUMMARY ===\n")
+cat(sprintf("Census tracts loaded: %s\n", scales::comma(nrow(TRACTS_SF))))
+cat(sprintf("Healthcare facilities loaded: %s\n", scales::comma(nrow(FACILITIES))))
+cat(sprintf("Total NYC population: %s\n", 
+            scales::comma(sum(TRACTS_SF$population, na.rm = TRUE))))
+cat(sprintf("Tracts with health outcome data: %d (%.1f%%)\n\n",
+            sum(!is.na(TRACTS_SF$DIABETES)),
+            100 * sum(!is.na(TRACTS_SF$DIABETES)) / nrow(TRACTS_SF)))
+```
+
+# Calculate Distances by Facility Type
+
+```{r calculate_distances}
+#' Calculate Minimum Distance to Nearest Facility
+calculate_min_distances <- function(
+    tracts_sf, 
+    facilities_df,
+    distance_unit = "miles",
+    facility_label = "all facilities"
+) {
+    
+    target_crs <- sf::st_crs(tracts_sf)
+    
+    message(sprintf("Converting %d %s to spatial format...", 
+                   nrow(facilities_df), facility_label))
+    facilities_sf <- facilities_df |>
+        sf::st_as_sf(
+            coords = c("Longitude", "Latitude"), 
+            crs = 4326,
+            remove = FALSE
+        ) |>
+        sf::st_transform(crs = target_crs)
+    
+    message("Calculating tract centroids...")
+    tract_centroids <- sf::st_centroid(tracts_sf)
+    
+    message(sprintf("Computing distances..."))
+    
+    distances_matrix <- sf::st_distance(tract_centroids, facilities_sf)
+    min_distances_ft <- apply(distances_matrix, 1, min)
+    
+    conversion_factor <- if (distance_unit == "miles") 5280 else 1
+    min_dist_miles <- as.numeric(min_distances_ft) / conversion_factor
+    
+    message(sprintf("Range: %.2f - %.2f miles",
+        min(min_dist_miles, na.rm = TRUE),
+        max(min_dist_miles, na.rm = TRUE)
+    ))
+    
+    return(min_dist_miles)
+}
+
+# Execute distance calculations for ALL facilities
+TRACTS_SF$min_dist_miles <- calculate_min_distances(TRACTS_SF, FACILITIES, facility_label = "healthcare facilities")
+
+# Calculate distances by facility type
+cat("\n=== CALCULATING DISTANCES BY FACILITY TYPE ===\n")
+
+hospitals <- FACILITIES |> filter(facility_type == "Hospital")
+if (nrow(hospitals) > 0) {
+    TRACTS_SF$dist_hospital <- calculate_min_distances(TRACTS_SF, hospitals, facility_label = "hospitals")
+}
+
+primary_care <- FACILITIES |> filter(facility_type == "Primary Care")
+if (nrow(primary_care) > 0) {
+    TRACTS_SF$dist_primary_care <- calculate_min_distances(TRACTS_SF, primary_care, facility_label = "primary care")
+}
+
+urgent_care <- FACILITIES |> filter(facility_type == "Urgent Care")
+if (nrow(urgent_care) > 0) {
+    TRACTS_SF$dist_urgent_care <- calculate_min_distances(TRACTS_SF, urgent_care, facility_label = "urgent care")
+}
+
+emergency <- FACILITIES |> filter(facility_type == "Emergency")
+if (nrow(emergency) > 0) {
+    TRACTS_SF$dist_emergency <- calculate_min_distances(TRACTS_SF, emergency, facility_label = "emergency")
+}
+
+mental_health <- FACILITIES |> filter(facility_type == "Mental Health")
+if (nrow(mental_health) > 0) {
+    TRACTS_SF$dist_mental_health <- calculate_min_distances(TRACTS_SF, mental_health, facility_label = "mental health")
+}
+
+# Quick validation
+cat("\n=== DISTANCE CALCULATION SUMMARY ===\n")
+cat(sprintf("Mean distance (all facilities): %.3f miles\n", 
+            mean(TRACTS_SF$min_dist_miles, na.rm = TRUE)))
+cat(sprintf("Median distance: %.3f miles\n", 
+            median(TRACTS_SF$min_dist_miles, na.rm = TRUE)))
+```
+
+# Fetch Additional Demographic Variables
+
+```{r demographics}
+cat("\n=== FETCHING DEMOGRAPHIC CONTROL VARIABLES ===\n")
+
+# Median household income
+income_data <- get_acs_nyc("B19013_001", year = 2023) |>
+    rename(median_income = B19013_001)
+
+# Percent minority
+white_data <- get_acs_nyc("B03002_003", year = 2023) |>
+    rename(white_pop = B03002_003)
+
+total_race <- get_acs_nyc("B03002_001", year = 2023) |>
+    rename(total_pop_race = B03002_001)
+
+minority_data <- white_data |>
+    left_join(total_race, by = "GEOID") |>
+    mutate(pct_minority = 100 * (1 - white_pop / total_pop_race)) |>
+    select(GEOID, pct_minority)
+
+# Foreign-born population
+foreign_born_num <- get_acs_nyc("B05002_013", year = 2023) |>
+    rename(foreign_born = B05002_013)
+
+nativity_total <- get_acs_nyc("B05002_001", year = 2023) |>
+    rename(nativity_total = B05002_001)
+
+foreign_born_data <- foreign_born_num |>
+    left_join(nativity_total, by = "GEOID") |>
+    mutate(pct_foreign_born = 100 * foreign_born / nativity_total) |>
+    select(GEOID, pct_foreign_born)
+
+# Poverty rate
+poverty_below <- get_acs_nyc("B17001_002", year = 2023) |>
+    rename(poverty_pop = B17001_002)
+
+poverty_total <- get_acs_nyc("B17001_001", year = 2023) |>
+    rename(poverty_total = B17001_001)
+
+poverty_data <- poverty_below |>
+    left_join(poverty_total, by = "GEOID") |>
+    mutate(pct_poverty = 100 * poverty_pop / poverty_total) |>
+    select(GEOID, pct_poverty)
+
+# Percent elderly (65+)
+elderly_vars <- c("B01001_020", "B01001_021", "B01001_022", "B01001_023", 
+                  "B01001_024", "B01001_025", "B01001_044", "B01001_045", 
+                  "B01001_046", "B01001_047", "B01001_048", "B01001_049")
+
+elderly_list <- list()
+for (i in seq_along(elderly_vars)) {
+    elderly_list[[i]] <- get_acs_nyc(elderly_vars[i], year = 2023) |>
+        rename(!!paste0("elderly_", i) := !!elderly_vars[i])
+}
+
+elderly_combined <- elderly_list[[1]]
+for (i in 2:length(elderly_list)) {
+    elderly_combined <- left_join(elderly_combined, elderly_list[[i]], by = "GEOID")
+}
+
+elderly_combined <- elderly_combined |>
+    left_join(POPULATION |> select(GEOID, population), by = "GEOID") |>
+    mutate(
+        elderly_total = rowSums(select(., starts_with("elderly_")), na.rm = TRUE),
+        pct_elderly = 100 * elderly_total / population
+    ) |>
+    select(GEOID, pct_elderly)
+
+# Merge all demographics with main dataset
+TRACTS_SF <- TRACTS_SF |>
+    left_join(income_data, by = "GEOID") |>
+    left_join(minority_data, by = "GEOID") |>
+    left_join(elderly_combined, by = "GEOID") |>
+    left_join(foreign_born_data, by = "GEOID") |>
+    left_join(poverty_data, by = "GEOID")
+
+cat("Demographics merged successfully\n")
+```
+
+# Healthcare Desert Analysis
+
+```{r deserts}
+cat("\n=== HEALTHCARE DESERT ANALYSIS ===\n")
+
+DESERT_THRESHOLD <- 1.0
+PRIMARY_CARE_THRESHOLD <- 0.5
+
+TRACTS_SF <- TRACTS_SF |>
+    mutate(
+        all_desert = min_dist_miles > DESERT_THRESHOLD,
+        hospital_desert = if ("dist_hospital" %in% names(.)) dist_hospital > DESERT_THRESHOLD else NA,
+        primary_care_desert = if ("dist_primary_care" %in% names(.)) dist_primary_care > PRIMARY_CARE_THRESHOLD else NA,
+        urgent_care_desert = if ("dist_urgent_care" %in% names(.)) dist_urgent_care > DESERT_THRESHOLD else NA,
+        emergency_desert = if ("dist_emergency" %in% names(.)) dist_emergency > DESERT_THRESHOLD else NA
+    )
+
+desert_summary <- TRACTS_SF |>
+    sf::st_drop_geometry() |>
+    summarise(
+        `All Facilities` = sum(all_desert, na.rm = TRUE),
+        `Hospital` = sum(hospital_desert, na.rm = TRUE),
+        `Primary Care (>0.5mi)` = sum(primary_care_desert, na.rm = TRUE),
+        `Urgent Care` = sum(urgent_care_desert, na.rm = TRUE),
+        `Emergency` = sum(emergency_desert, na.rm = TRUE)
+    ) |>
+    pivot_longer(everything(), names_to = "Facility Type", values_to = "Desert Tracts") |>
+    mutate(`% of Total` = round(100 * `Desert Tracts` / nrow(TRACTS_SF), 1))
+
+knitr::kable(desert_summary, caption = "Healthcare Desert Tracts by Facility Type")
+```
+
+# EXTENDED ANALYSIS: FIVE RESEARCH QUESTIONS
+
+## Q1: Per-Capita Healthcare Facility Availability by Borough
+
+```{r q1_facility_availability}
+cat("\n=== QUESTION 1: PER-CAPITA FACILITY AVAILABILITY ===\n")
+
+facility_availability <- FACILITIES |>
+    count(Borough, name = "n_facilities") |>
+    left_join(
+        TRACTS_SF |> 
+            sf::st_drop_geometry() |> 
+            group_by(borough) |> 
+            summarise(population = sum(population, na.rm = TRUE)),
+        by = c("Borough" = "borough")
+    ) |>
+    mutate(facilities_per_10k = (n_facilities / population) * 10000) |>
+    arrange(desc(facilities_per_10k))
+
+knitr::kable(
+    facility_availability |>
+        mutate(population = scales::comma(population)) |>
+        rename(`Facilities` = n_facilities, `Population` = population, 
+               `Per 10K Pop` = facilities_per_10k),
+    caption = "Healthcare Facility Availability by Borough",
+    digits = 2
+)
+
+p_availability <- ggplot(facility_availability, 
+                         aes(x = reorder(Borough, facilities_per_10k), 
+                             y = facilities_per_10k, fill = Borough)) +
+    geom_col() +
+    geom_text(aes(label = sprintf("%.2f", facilities_per_10k)), 
+              hjust = -0.2, size = 4) +
+    coord_flip() +
+    scale_fill_viridis_d(option = "plasma") +
+    labs(title = "Healthcare Facilities Per 10,000 Population by Borough",
+         x = NULL, y = "Facilities per 10,000 residents") +
+    theme_minimal() +
+    theme(legend.position = "none")
+
+print(p_availability)
+```
+
+## Q2: Proximity vs. Income & Race/Ethnicity
+
+```{r q2_demographics}
+cat("\n=== QUESTION 2: HEALTHCARE PROXIMITY VS. DEMOGRAPHICS ===\n")
+
+TRACTS_SF <- TRACTS_SF |>
+    mutate(
+        income_quintile = cut(median_income, 
+                             breaks = quantile(median_income, probs = seq(0, 1, 0.2), na.rm = TRUE),
+                             labels = c("Q1 (Lowest)", "Q2", "Q3", "Q4", "Q5 (Highest)"),
+                             include.lowest = TRUE),
+        minority_quintile = cut(pct_minority,
+                               breaks = quantile(pct_minority, probs = seq(0, 1, 0.2), na.rm = TRUE),
+                               labels = c("Q1 (Least)", "Q2", "Q3", "Q4", "Q5 (Most)"),
+                               include.lowest = TRUE)
+    )
+
+cor_income <- cor.test(TRACTS_SF$min_dist_miles, TRACTS_SF$median_income, use = "complete.obs")
+cor_minority <- cor.test(TRACTS_SF$min_dist_miles, TRACTS_SF$pct_minority, use = "complete.obs")
+
+cat(sprintf("Income vs. Distance: r = %.3f (p = %.4f) %s\n",
+            cor_income$estimate, cor_income$p.value,
+            ifelse(cor_income$p.value < 0.05, "**SIGNIFICANT**", "")))
+cat(sprintf("Minority %% vs. Distance: r = %.3f (p = %.4f) %s\n",
+            cor_minority$estimate, cor_minority$p.value,
+            ifelse(cor_minority$p.value < 0.05, "**SIGNIFICANT**", "")))
+
+income_distance <- TRACTS_SF |>
+    sf::st_drop_geometry() |>
+    filter(!is.na(income_quintile)) |>
+    group_by(income_quintile) |>
+    summarise(
+        n_tracts = n(),
+        mean_dist = mean(min_dist_miles, na.rm = TRUE),
+        mean_income = mean(median_income, na.rm = TRUE),
+        .groups = "drop"
+    )
+
+knitr::kable(
+    income_distance |>
+        mutate(mean_income = scales::dollar(mean_income)),
+    caption = "Healthcare Access by Income Quintile",
+    digits = 3
+)
+
+p_income_dist <- ggplot(TRACTS_SF |> sf::st_drop_geometry() |> filter(!is.na(income_quintile)),
+                        aes(x = income_quintile, y = min_dist_miles, fill = income_quintile)) +
+    geom_boxplot() +
+    scale_fill_viridis_d(option = "plasma") +
+    labs(title = "Healthcare Access by Income Level",
+         subtitle = sprintf("Correlation: r = %.3f (p = %.4f)", 
+                          cor_income$estimate, cor_income$p.value),
+         x = "Income Quintile", y = "Distance (miles)") +
+    theme_minimal() +
+    theme(legend.position = "none", axis.text.x = element_text(angle = 45, hjust = 1))
+
+print(p_income_dist)
+```
+
+## Q3: Foreign-Born Population & Healthcare Access
+
+```{r q3_foreign_born}
+cat("\n=== QUESTION 3: FOREIGN-BORN POPULATION ===\n")
+
+TRACTS_SF <- TRACTS_SF |>
+    mutate(
+        foreign_born_quintile = cut(pct_foreign_born,
+                                   breaks = quantile(pct_foreign_born, probs = seq(0, 1, 0.2), na.rm = TRUE),
+                                   labels = c("Q1 (Lowest)", "Q2", "Q3", "Q4", "Q5 (Highest)"),
+                                   include.lowest = TRUE)
+    )
+
+cor_foreign <- cor.test(TRACTS_SF$min_dist_miles, TRACTS_SF$pct_foreign_born, use = "complete.obs")
+
+cat(sprintf("Foreign-Born %% vs. Distance: r = %.3f (p = %.4f) %s\n",
+            cor_foreign$estimate, cor_foreign$p.value,
+            ifelse(cor_foreign$p.value < 0.05, "**SIGNIFICANT**", "")))
+
+if ("ACCESS2" %in% names(TRACTS_SF)) {
+    cor_foreign_insurance <- cor.test(TRACTS_SF$pct_foreign_born, TRACTS_SF$ACCESS2, use = "complete.obs")
+    cat(sprintf("Foreign-Born %% vs. Uninsured: r = %.3f (p = %.4f) %s\n",
+                cor_foreign_insurance$estimate, cor_foreign_insurance$p.value,
+                ifelse(cor_foreign_insurance$p.value < 0.05, "**SIGNIFICANT**", "")))
+}
+
+foreign_distance <- TRACTS_SF |>
+    sf::st_drop_geometry() |>
+    filter(!is.na(foreign_born_quintile)) |>
+    group_by(foreign_born_quintile) |>
+    summarise(
+        n_tracts = n(),
+        mean_dist = mean(min_dist_miles, na.rm = TRUE),
+        mean_foreign_born = mean(pct_foreign_born, na.rm = TRUE),
+        .groups = "drop"
+    )
+
+knitr::kable(foreign_distance, caption = "Healthcare Access by Foreign-Born Population", digits = 2)
+
+p_foreign_dist <- ggplot(TRACTS_SF |> sf::st_drop_geometry() |> filter(!is.na(foreign_born_quintile)),
+                         aes(x = foreign_born_quintile, y = min_dist_miles, fill = foreign_born_quintile)) +
+    geom_boxplot() +
+    scale_fill_viridis_d(option = "cividis") +
+    labs(title = "Healthcare Access by Foreign-Born Population Percentage",
+         x = "Foreign-Born % Quintile", y = "Distance (miles)") +
+    theme_minimal() +
+    theme(legend.position = "none", axis.text.x = element_text(angle = 45, hjust = 1))
+
+print(p_foreign_dist)
+```
+
+## Q4: Income Level & Healthcare Affordability
+
+```{r q4_affordability}
+cat("\n=== QUESTION 4: INCOME & HEALTHCARE AFFORDABILITY ===\n")
+
+TRACTS_SF <- TRACTS_SF |>
+    mutate(
+        income_category = case_when(
+            median_income < 40000 ~ "Very Low (<$40K)",
+            median_income < 60000 ~ "Low ($40-60K)",
+            median_income < 80000 ~ "Moderate ($60-80K)",
+            median_income < 100000 ~ "High ($80-100K)",
+            median_income >= 100000 ~ "Very High (>$100K)",
+            TRUE ~ NA_character_
+        ) |> factor(levels = c("Very Low (<$40K)", "Low ($40-60K)", 
+                               "Moderate ($60-80K)", "High ($80-100K)", 
+                               "Very High (>$100K)"))
+    )
+
+income_access_summary <- TRACTS_SF |>
+    sf::st_drop_geometry() |>
+    filter(!is.na(income_category)) |>
+    group_by(income_category) |>
+    summarise(
+        n_tracts = n(),
+        population = sum(population, na.rm = TRUE),
+        mean_dist = mean(min_dist_miles, na.rm = TRUE),
+        mean_income = mean(median_income, na.rm = TRUE),
+        mean_poverty = mean(pct_poverty, na.rm = TRUE),
+        mean_uninsured = mean(ACCESS2, na.rm = TRUE),
+        pct_desert = 100 * sum(all_desert, na.rm = TRUE) / n(),
+        .groups = "drop"
+    )
+
+knitr::kable(
+    income_access_summary |>
+        mutate(population = scales::comma(population),
+               mean_income = scales::dollar(mean_income)),
+    caption = "Healthcare Access and Affordability by Income Level",
+    digits = 2
+)
+
+if ("ACCESS2" %in% names(TRACTS_SF)) {
+    cor_income_uninsured <- cor.test(TRACTS_SF$median_income, TRACTS_SF$ACCESS2, use = "complete.obs")
+    cat(sprintf("\nIncome vs. Uninsured Rate: r = %.3f (p = %.4f) %s\n",
+                cor_income_uninsured$estimate, cor_income_uninsured$p.value,
+                ifelse(cor_income_uninsured$p.value < 0.05, "**SIGNIFICANT**", "")))
+}
+
+cor_poverty_dist <- cor.test(TRACTS_SF$pct_poverty, TRACTS_SF$min_dist_miles, use = "complete.obs")
+cat(sprintf("Poverty Rate vs. Distance: r = %.3f (p = %.4f) %s\n",
+            cor_poverty_dist$estimate, cor_poverty_dist$p.value,
+            ifelse(cor_poverty_dist$p.value < 0.05, "**SIGNIFICANT**", "")))
+
+p_income_uninsured <- ggplot(TRACTS_SF |> sf::st_drop_geometry() |> filter(!is.na(income_category)),
+                             aes(x = income_category, y = ACCESS2, fill = income_category)) +
+    geom_boxplot() +
+    scale_fill_viridis_d(option = "plasma") +
+    labs(title = "Uninsured Rate by Income Level",
+         x = "Income Category", y = "Uninsured Rate (%)") +
+    theme_minimal() +
+    theme(legend.position = "none", axis.text.x = element_text(angle = 45, hjust = 1))
+
+print(p_income_uninsured)
+```
+
+## Q5: Insurance Coverage Variation & Association
+
+```{r q5_insurance}
+cat("\n=== QUESTION 5: HEALTH INSURANCE COVERAGE ===\n")
+
+TRACTS_SF <- TRACTS_SF |>
+    mutate(
+        insurance_category = case_when(
+            ACCESS2 < 5 ~ "Very High Coverage (>95%)",
+            ACCESS2 < 10 ~ "High Coverage (90-95%)",
+            ACCESS2 < 15 ~ "Moderate Coverage (85-90%)",
+            ACCESS2 < 20 ~ "Low Coverage (80-85%)",
+            ACCESS2 >= 20 ~ "Very Low Coverage (<80%)",
+            TRUE ~ NA_character_
+        ) |> factor(levels = c("Very High Coverage (>95%)", 
+                               "High Coverage (90-95%)",
+                               "Moderate Coverage (85-90%)",
+                               "Low Coverage (80-85%)",
+                               "Very Low Coverage (<80%)"))
+    )
+
+insurance_by_borough <- TRACTS_SF |>
+    sf::st_drop_geometry() |>
+    group_by(borough) |>
+    summarise(
+        n_tracts = n(),
+        mean_uninsured = mean(ACCESS2, na.rm = TRUE),
+        median_uninsured = median(ACCESS2, na.rm = TRUE),
+        sd_uninsured = sd(ACCESS2, na.rm = TRUE),
+        .groups = "drop"
+    ) |>
+    arrange(desc(mean_uninsured))
+
+knitr::kable(insurance_by_borough, caption = "Health Insurance Coverage Variation by Borough", digits = 2)
+
+insurance_access_analysis <- TRACTS_SF |>
+    sf::st_drop_geometry() |>
+    filter(!is.na(insurance_category)) |>
+    group_by(insurance_category) |>
+    summarise(
+        n_tracts = n(),
+        population = sum(population, na.rm = TRUE),
+        mean_dist = mean(min_dist_miles, na.rm = TRUE),
+        mean_income = mean(median_income, na.rm = TRUE),
+        mean_diabetes = mean(DIABETES, na.rm = TRUE),
+        .groups = "drop"
+    )
+
+knitr::kable(
+    insurance_access_analysis |>
+        mutate(population = scales::comma(population),
+               mean_income = scales::dollar(mean_income)),
+    caption = "Healthcare Access by Insurance Coverage Level",
+    digits = 2
+)
+
+cor_insurance_dist <- cor.test(TRACTS_SF$ACCESS2, TRACTS_SF$min_dist_miles, use = "complete.obs")
+cat(sprintf("\nInsurance Coverage vs. Distance: r = %.3f (p = %.4f) %s\n",
+            cor_insurance_dist$estimate, cor_insurance_dist$p.value,
+            ifelse(cor_insurance_dist$p.value < 0.05, "**SIGNIFICANT**", "")))
+
+if ("CHECKUP" %in% names(TRACTS_SF)) {
+    cor_insurance_checkup <- cor.test(TRACTS_SF$ACCESS2, TRACTS_SF$CHECKUP, use = "complete.obs")
+    cat(sprintf("Uninsured Rate vs. Checkup Rate: r = %.3f (p = %.4f) %s\n",
+                cor_insurance_checkup$estimate, cor_insurance_checkup$p.value,
+                ifelse(cor_insurance_checkup$p.value < 0.05, "**SIGNIFICANT**", "")))
+}
+
+p_insurance_borough <- ggplot(TRACTS_SF |> sf::st_drop_geometry() |> filter(!is.na(ACCESS2)),
+                              aes(x = reorder(borough, ACCESS2, median), 
+                                  y = ACCESS2, fill = borough)) +
+    geom_boxplot() +
+    coord_flip() +
+    scale_fill_viridis_d(option = "plasma") +
+    labs(title = "Health Insurance Coverage Variation Across NYC Boroughs",
+         x = NULL, y = "Uninsured Rate (%)") +
+    theme_minimal() +
+    theme(legend.position = "none")
+
+print(p_insurance_borough)
+
+# Multiple regression: Predictors of uninsured rate
+model_insurance <- lm(ACCESS2 ~ min_dist_miles + median_income + 
+                      pct_minority + pct_foreign_born + pct_poverty,
+                      data = TRACTS_SF)
+
+cat("\n=== MULTIPLE REGRESSION: Predictors of Uninsured Rate ===\n")
+print(summary(model_insurance))
+```
+
+# REGRESSION ANALYSIS: Health Outcomes
+
+```{r regression_analysis}
+cat("\n=== REGRESSION ANALYSIS: HEALTHCARE ACCESS PREDICTING HEALTH OUTCOMES ===\n")
+
+# Model 1: Diabetes predicted by distance
+if ("DIABETES" %in% names(TRACTS_SF)) {
+    cat("\nMODEL 1: DIABETES PREVALENCE\n")
+    model_diabetes <- lm(DIABETES ~ min_dist_miles, data = TRACTS_SF)
+    print(summary(model_diabetes))
+    
+    beta <- coef(model_diabetes)[2]
+    cat(sprintf("\nInterpretation: Each additional mile predicts %.2f%% change in diabetes prevalence\n", beta))
+    cat(sprintf("R-squared: %.3f (%.1f%% of variance explained)\n", 
+                summary(model_diabetes)$r.squared, 
+                100 * summary(model_diabetes)$r.squared))
+}
+
+# Model 2: Diabetes with demographic controls
+if ("DIABETES" %in% names(TRACTS_SF)) {
+    cat("\n\nMODEL 2: DIABETES WITH DEMOGRAPHIC CONTROLS\n")
+    model_diabetes_full <- lm(DIABETES ~ min_dist_miles + median_income + 
+                              pct_minority + pct_elderly, 
+                              data = TRACTS_SF)
+    print(summary(model_diabetes_full))
+    
+    cat("\nKEY FINDINGS:\n")
+    cat(sprintf("  • Healthcare distance effect (controlling for demographics): β = %.3f (p = %.4f)\n",
+                coef(model_diabetes_full)["min_dist_miles"],
+                summary(model_diabetes_full)$coefficients["min_dist_miles", 4]))
+    cat(sprintf("  • Model R-squared: %.3f (%.1f%% of variance explained)\n",
+                summary(model_diabetes_full)$r.squared,
+                100 * summary(model_diabetes_full)$r.squared))
+    
+    if (exists("model_diabetes")) {
+        cat(sprintf("  • Improvement with controls: %.1f%% more variance explained\n",
+                    100 * (summary(model_diabetes_full)$r.squared - summary(model_diabetes)$r.squared)))
+    }
+}
+
+# Visualization: Regression plot
+if ("DIABETES" %in% names(TRACTS_SF) && exists("model_diabetes")) {
+    p_regression <- ggplot(TRACTS_SF |> sf::st_drop_geometry(), 
+                           aes(x = min_dist_miles, y = DIABETES)) +
+        geom_point(alpha = 0.3, color = "gray50") +
+        geom_smooth(method = "lm", se = TRUE, color = "red", fill = "pink") +
+        labs(
+            title = "Regression Model: Healthcare Access Predicting Diabetes",
+            subtitle = sprintf("β = %.2f, R² = %.3f, p < %.4f",
+                              coef(model_diabetes)[2],
+                              summary(model_diabetes)$r.squared,
+                              summary(model_diabetes)$coefficients[2,4]),
+            x = "Distance to Nearest Healthcare Facility (miles)",
+            y = "Diabetes Prevalence (%)"
+        ) +
+        theme_minimal() +
+        theme(plot.title = element_text(face = "bold"))
+    
+    print(p_regression)
+}
+```
+
+# CORRELATION ANALYSIS: Access vs. Health Outcomes
+
+```{r correlation_analysis}
+cat("\n=== CORRELATION ANALYSIS: HEALTHCARE ACCESS VS. HEALTH OUTCOMES ===\n")
+
+health_vars <- c("DIABETES", "BPHIGH", "CHD", "OBESITY", "STROKE", 
+                 "CANCER", "CASTHMA", "COPD", "ACCESS2", "CHECKUP", "DENTAL")
+existing_health_vars <- health_vars[health_vars %in% names(TRACTS_SF)]
+
+# Health outcomes summary
+health_summary <- TRACTS_SF |>
+    sf::st_drop_geometry() |>
+    select(all_of(existing_health_vars)) |>
+    pivot_longer(everything(), names_to = "measure", values_to = "prevalence") |>
+    group_by(measure) |>
+    summarise(
+        n = sum(!is.na(prevalence)),
+        mean = mean(prevalence, na.rm = TRUE),
+        median = median(prevalence, na.rm = TRUE),
+        sd = sd(prevalence, na.rm = TRUE),
+        .groups = "drop"
+    ) |>
+    mutate(across(c(mean, median, sd), ~round(.x, 2)))
+
+knitr::kable(health_summary, caption = "Health Outcome Prevalence Rates (%) Across NYC Census Tracts")
+
+# Correlation matrix
+distance_cols <- c("min_dist_miles")
+existing_dist_cols <- distance_cols[distance_cols %in% names(TRACTS_SF)]
+
+if (length(existing_health_vars) > 0 && length(existing_dist_cols) > 0) {
+    cor_data <- TRACTS_SF |>
+        sf::st_drop_geometry() |>
+        select(all_of(c(existing_dist_cols, existing_health_vars)))
+    
+    cor_matrix <- cor(cor_data, use = "pairwise.complete.obs")
+    cor_subset <- cor_matrix[existing_dist_cols, existing_health_vars, drop = FALSE]
+    
+    cat("\nCorrelation coefficients (distance vs. health outcomes):\n")
+    print(round(cor_subset, 3))
+    
+    # Statistical significance testing
+    cat("\n=== SIGNIFICANCE TESTING ===\n")
+    for (health_var in existing_health_vars) {
+        test_result <- cor.test(TRACTS_SF$min_dist_miles, TRACTS_SF[[health_var]], 
+                               use = "pairwise.complete.obs")
+        if (test_result$p.value < 0.05) {
+            cat(sprintf("%s: r = %.3f (p = %.4f) **SIGNIFICANT**\n", 
+                       health_var, test_result$estimate, test_result$p.value))
+        }
+    }
+}
+```
+
+# DATA VISUALIZATION
+
+```{r visualizations}
+# Map: Distance to nearest facility
+p_map <- ggplot(TRACTS_SF) +
+    geom_sf(aes(fill = min_dist_miles), color = "white", size = 0.1) +
+    scale_fill_viridis_c(
+        name = "Distance (Miles)",
+        option = "plasma",
+        direction = -1
+    ) +
+    labs(
+        title = "Distance to Nearest Healthcare Facility by Census Tract",
+        subtitle = "NYC 2023",
+        caption = "Data: 2023 ACS & NYC FacDB 2024"
+    ) +
+    theme_void() +
+    theme(
+        legend.position = "bottom",
+        legend.key.width = unit(2, "cm"),
+        plot.title = element_text(size = 14, face = "bold")
+    )
+
+print(p_map)
+
+# Map: Diabetes prevalence
+if ("DIABETES" %in% names(TRACTS_SF)) {
+    p_map_diabetes <- ggplot(TRACTS_SF) +
+        geom_sf(aes(fill = DIABETES), color = "white", size = 0.1) +
+        scale_fill_viridis_c(
+            name = "Diabetes (%)",
+            option = "magma",
+            direction = -1
+        ) +
+        labs(
+            title = "Diabetes Prevalence by Census Tract",
+            subtitle = "NYC 2021",
+            caption = "Data: CDC PLACES 2023"
+        ) +
+        theme_void() +
+        theme(
+            legend.position = "bottom",
+            legend.key.width = unit(2, "cm"),
+            plot.title = element_text(size = 14, face = "bold")
+        )
+    
+    print(p_map_diabetes)
+}
+
+# Dual map: Access vs. Diabetes
+if ("DIABETES" %in% names(TRACTS_SF)) {
+    p_access_map <- ggplot(TRACTS_SF) +
+        geom_sf(aes(fill = min_dist_miles), color = NA) +
+        scale_fill_viridis_c(name = "Distance (mi)", option = "plasma", direction = -1) +
+        labs(title = "Healthcare Access") +
+        theme_void() +
+        theme(legend.position = "bottom", legend.key.width = unit(1.5, "cm"))
+    
+    p_diabetes_map <- ggplot(TRACTS_SF) +
+        geom_sf(aes(fill = DIABETES), color = NA) +
+        scale_fill_viridis_c(name = "Diabetes (%)", option = "magma", direction = -1) +
+        labs(title = "Diabetes Prevalence") +
+        theme_void() +
+        theme(legend.position = "bottom", legend.key.width = unit(1.5, "cm"))
+    
+    combined_map <- p_access_map + p_diabetes_map +
+        plot_annotation(
+            title = "Healthcare Access vs. Diabetes Prevalence in NYC",
+            theme = theme(plot.title = element_text(size = 16, face = "bold"))
+        )
+    
+    print(combined_map)
+}
+```
+
+# COMPREHENSIVE FINDINGS SUMMARY
+
+```{r final_summary}
+cat("\n")
+cat("===============================================\n")
+cat("   NYC HEALTHCARE ACCESS ANALYSIS\n")
+cat("      COMPREHENSIVE FINDINGS SUMMARY\n")
+cat("===============================================\n\n")
+
+cat("DATA OVERVIEW:\n")
+cat(sprintf("  • Census Tracts: %s\n", scales::comma(nrow(TRACTS_SF))))
+cat(sprintf("  • Total Population: %s\n", scales::comma(sum(TRACTS_SF$population, na.rm = TRUE))))
+cat(sprintf("  • Healthcare Facilities: %s\n", scales::comma(nrow(FACILITIES))))
+cat(sprintf("  • Mean distance to facility: %.3f miles\n\n", mean(TRACTS_SF$min_dist_miles, na.rm = TRUE)))
+
+cat("Q1: PER-CAPITA FACILITY AVAILABILITY\n")
+cat("-----------------------------------------------\n")
+best_borough <- facility_availability |> slice(1)
+worst_borough <- facility_availability |> slice(n())
+cat(sprintf("• Best: %s (%.2f per 10K)\n", best_borough$Borough, best_borough$facilities_per_10k))
+cat(sprintf("• Worst: %s (%.2f per 10K)\n", worst_borough$Borough, worst_borough$facilities_per_10k))
+cat(sprintf("• Ratio: %.1fx difference\n\n", 
+            best_borough$facilities_per_10k / worst_borough$facilities_per_10k))
+
+cat("Q2: INCOME & RACE/ETHNICITY DISPARITIES\n")
+cat("-----------------------------------------------\n")
+cat(sprintf("• Income-Distance: r = %.3f (p = %.4f) %s\n",
+            cor_income$estimate, cor_income$p.value,
+            ifelse(cor_income$p.value < 0.05, "SIGNIFICANT", "Not significant")))
+cat(sprintf("• Minority%%-Distance: r = %.3f (p = %.4f) %s\n\n",
+            cor_minority$estimate, cor_minority$p.value,
+            ifelse(cor_minority$p.value < 0.05, "SIGNIFICANT", "Not significant")))
+
+cat("Q3: FOREIGN-BORN POPULATION\n")
+cat("-----------------------------------------------\n")
+cat(sprintf("• Foreign-Born%%-Distance: r = %.3f (p = %.4f) %s\n",
+            cor_foreign$estimate, cor_foreign$p.value,
+            ifelse(cor_foreign$p.value < 0.05, "SIGNIFICANT", "Not significant")))
+if (exists("cor_foreign_insurance")) {
+    cat(sprintf("• Foreign-Born%%-Uninsured: r = %.3f (p = %.4f) %s\n\n",
+                cor_foreign_insurance$estimate, cor_foreign_insurance$p.value,
+                ifelse(cor_foreign_insurance$p.value < 0.05, "SIGNIFICANT", "Not significant")))
+}
+
+cat("Q4: INCOME & HEALTHCARE AFFORDABILITY\n")
+cat("-----------------------------------------------\n")
+if (exists("cor_income_uninsured")) {
+    cat(sprintf("• Income-Uninsured: r = %.3f (p = %.4f) %s\n",
+                cor_income_uninsured$estimate, cor_income_uninsured$p.value,
+                ifelse(cor_income_uninsured$p.value < 0.05, "SIGNIFICANT", "Not significant")))
+}
+cat(sprintf("• Poverty-Distance: r = %.3f (p = %.4f) %s\n\n",
+            cor_poverty_dist$estimate, cor_poverty_dist$p.value,
+            ifelse(cor_poverty_dist$p.value < 0.05, "SIGNIFICANT", "Not significant")))
+
+cat("Q5: INSURANCE COVERAGE PATTERNS\n")
+cat("-----------------------------------------------\n")
+cat(sprintf("• Insurance-Distance: r = %.3f (p = %.4f) %s\n",
+            cor_insurance_dist$estimate, cor_insurance_dist$p.value,
+            ifelse(cor_insurance_dist$p.value < 0.05, "SIGNIFICANT", "Not significant")))
+if (exists("cor_insurance_checkup")) {
+    cat(sprintf("• Uninsured-Checkup: r = %.3f (p = %.4f) %s\n\n",
+                cor_insurance_checkup$estimate, cor_insurance_checkup$p.value,
+                ifelse(cor_insurance_checkup$p.value < 0.05, "SIGNIFICANT", "Not significant")))
+}
+
+cat("POLICY RECOMMENDATIONS\n")
+cat("-----------------------------------------------\n")
+cat("1. Expand community health centers in underserved boroughs\n")
+cat("2. Increase mobile health services in healthcare deserts\n")
+cat("3. Targeted insurance outreach to foreign-born communities\n")
+cat("4. Address transportation barriers in low-income areas\n")
+cat("5. Strengthen safety net programs linking insurance to care\n")
+cat("6. Cultural competency training for providers\n")
+cat("7. Data-driven resource allocation based on equity metrics\n\n")
+
+cat("===============================================\n")
+cat("           END OF ANALYSIS REPORT\n")
+cat("===============================================\n")
+```
+
+# Export Results
+
+```{r export_results, eval=FALSE}
+# Export summary tables
+write.csv(facility_availability, "results_q1_facility_availability.csv", row.names = FALSE)
+write.csv(income_distance, "results_q2_income_distance.csv", row.names = FALSE)
+write.csv(foreign_distance, "results_q3_foreign_born.csv", row.names = FALSE)
+write.csv(income_access_summary, "results_q4_income_affordability.csv", row.names = FALSE)
+write.csv(insurance_by_borough, "results_q5_insurance_borough.csv", row.names = FALSE)
+
+cat("\n✓ Results exported to CSV files\n")
+```
