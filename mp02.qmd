@@ -1,6 +1,6 @@
 ---
 title: "Making Backyards Affordable for All: A YIMBY Analysis"
-author: "Your Name"
+author: "Matthew Rivera"
 date: today
 format:
   html:
@@ -12,11 +12,21 @@ format:
 execute:
   warning: false
   message: false
+editor: 
+  markdown: 
+    wrap: 72
 ---
 
 # Introduction
 
-Housing affordability remains one of the most pressing challenges facing American cities today. This analysis examines metropolitan areas across the United States to identify "YIMBY" (Yes In My Backyard) success stories—cities that have effectively addressed housing affordability through permissive building policies. Using data from the US Census Bureau and Bureau of Labor Statistics, we develop metrics to measure rent burden and housing growth, ultimately identifying which cities have made meaningful progress in making housing more affordable.
+Housing affordability remains one of the most pressing challenges facing
+American cities today. This analysis examines metropolitan areas across
+the United States to identify "YIMBY" (Yes In My Backyard) success
+stories—cities that have effectively addressed housing affordability
+through permissive building policies. Using data from the US Census
+Bureau and Bureau of Labor Statistics, we develop metrics to measure
+rent burden and housing growth, ultimately identifying which cities have
+made meaningful progress in making housing more affordable.
 
 # Data Acquisition
 
@@ -346,19 +356,18 @@ erDiagram
 
 We have successfully imported five main datasets:
 
-- **INCOME**: Household income by CBSA and year
-- **RENT**: Monthly rent by CBSA and year  
-- **POPULATION**: Total population by CBSA and year
-- **HOUSEHOLDS**: Number of households by CBSA and year
-- **PERMITS**: New housing units permitted by CBSA and year
-- **WAGES**: Employment and wage data by CBSA, industry, and year
-- **INDUSTRY_CODES**: NAICS industry code lookup table
+-   **INCOME**: Household income by CBSA and year
+-   **RENT**: Monthly rent by CBSA and year\
+-   **POPULATION**: Total population by CBSA and year
+-   **HOUSEHOLDS**: Number of households by CBSA and year
+-   **PERMITS**: New housing units permitted by CBSA and year
+-   **WAGES**: Employment and wage data by CBSA, industry, and year
+-   **INDUSTRY_CODES**: NAICS industry code lookup table
 
-**Key Join Keys:**
-- Census data uses `GEOID` (as character) and `NAME` (CBSA name)
-- BLS data uses `FIPS` (CBSA code as "C12345")
-- Permits data uses `CBSA` (as integer)
-- All datasets include `year` for temporal joins
+**Key Join Keys:** - Census data uses `GEOID` (as character) and `NAME`
+(CBSA name) - BLS data uses `FIPS` (CBSA code as "C12345") - Permits
+data uses `CBSA` (as integer) - All datasets include `year` for temporal
+joins
 
 # Data Integration and Initial Exploration
 
@@ -387,7 +396,9 @@ q1_result |>
             options = list(pageLength = 5))
 ```
 
-**Answer:** The `r q1_result$NAME[1]` CBSA permitted the largest number of new housing units between 2010 and 2019, with a total of `r format(q1_result$total_permits[1], big.mark = ",")` units.
+**Answer:** The `r q1_result$NAME[1]` CBSA permitted the largest number
+of new housing units between 2010 and 2019, with a total of
+`r format(q1_result$total_permits[1], big.mark = ",")` units.
 
 ### Question 2: In what year did Albuquerque, NM (CBSA Number 10740) permit the most new housing units?
 
@@ -409,9 +420,13 @@ albuquerque_permits |>
             options = list(pageLength = 15))
 ```
 
-**Answer:** Albuquerque permitted the most new housing units in `r q2_result$year`, with `r format(q2_result$new_housing_units_permitted, big.mark = ",")` permits issued. 
+**Answer:** Albuquerque permitted the most new housing units in
+`r q2_result$year`, with
+`r format(q2_result$new_housing_units_permitted, big.mark = ",")`
+permits issued.
 
-**Note:** Be careful about the COVID-19 data artifact mentioned in the instructions.
+**Note:** Be careful about the COVID-19 data artifact mentioned in the
+instructions.
 
 ### Question 3: Which state (not CBSA) had the highest average individual income in 2015? To answer this question, you will need to first compute the total income per CBSA by multiplying the average household income by the number of households, and then sum total income and total population across all CBSAs in a state. With these numbers, you can answer this question.
 
@@ -454,7 +469,8 @@ q3_result |>
             options = list(pageLength = 15))
 ```
 
-**Answer:** `r q3_result$name[2]` had the highest average household income in 2015 at `r q3_result$avg_individual_income[2]`.
+**Answer:** `r q3_result$name[2]` had the highest average individual
+income in 2015 at `r q3_result$avg_individual_income[2]`.
 
 ### Question 4: Data scientists and business analysts are recorded under NAICS code 5182. What is the last year in which the NYC CBSA had the most data scientists in the country? In recent, the San Francisco CBSA has had the most data scientists.
 
@@ -487,7 +503,8 @@ q4_result |>
             options = list(pageLength = 15))
 ```
 
-**Answer:** NYC last had the most data scientists in `r max(q4_result$YEAR[str_detect(q4_result$NAME, "New York")])`.
+**Answer:** NYC last had the most data scientists in
+`r max(q4_result$YEAR[str_detect(q4_result$NAME, "New York")])`.
 
 ### Question 5: What fraction of total wages in the NYC CBSA was earned by people employed in the finance and insurance industries (NAICS code 52)? In what year did this fraction peak?
 
@@ -522,7 +539,9 @@ nyc_finance |>
             options = list(pageLength = 10))
 ```
 
-**Answer:** The finance and insurance sector peaked at `r peak_year$finance_fraction_pct` of total NYC wages in `r peak_year$YEAR`.
+**Answer:** The finance and insurance sector peaked at
+`r peak_year$finance_fraction_pct` of total NYC wages in
+`r peak_year$YEAR`.
 
 ## Task 3: Initial Visualizations
 
@@ -557,7 +576,10 @@ ggplot(rent_income_2009, aes(x = household_income, y = monthly_rent)) +
   )
 ```
 
-**Interpretation:** There is a strong positive relationship between household income and monthly rent across CBSAs. Higher-income areas tend to have higher rents, suggesting that housing costs scale with local economic conditions.
+**Interpretation:** There is a strong positive relationship between
+household income and monthly rent across CBSAs. Higher-income areas tend
+to have higher rents, suggesting that housing costs scale with local
+economic conditions.
 
 ### Visualization 2: Total vs. Healthcare Employment Over Time
 
@@ -603,7 +625,10 @@ ggplot(healthcare_employment,
   )
 ```
 
-**Interpretation:** Healthcare employment grows proportionally with total employment across CBSAs. The color gradient shows the temporal evolution, with more recent years showing slightly higher healthcare employment shares.
+**Interpretation:** Healthcare employment grows proportionally with
+total employment across CBSAs. The color gradient shows the temporal
+evolution, with more recent years showing slightly higher healthcare
+employment shares.
 
 ### Visualization 3: Household Size Evolution Over Time
 
@@ -651,7 +676,9 @@ ggplot(household_size_subset, aes(x = year, y = household_size, group = NAME, co
   )
 ```
 
-**Interpretation:** Household sizes have remained relatively stable over time, hovering around 2.5-3.0 persons per household, with modest variation across metropolitan areas.
+**Interpretation:** Household sizes have remained relatively stable over
+time, hovering around 2.5-3.0 persons per household, with modest
+variation across metropolitan areas.
 
 # Building Indices
 
@@ -684,7 +711,9 @@ rent_burden_data <- rent_burden_data |>
         # Ensure index is between 0 and 100
         rent_burden_index = pmax(0, pmin(100, rent_burden_index))
     )
+```
 
+```{r}
 # Table 1: Single metro area over time (NYC)
 nyc_rent_burden <- rent_burden_data |>
     filter(str_detect(NAME, "New York-Newark-Jersey")) |>
@@ -702,7 +731,21 @@ nyc_rent_burden <- rent_burden_data |>
 datatable(nyc_rent_burden, 
           caption = "Rent Burden Evolution: New York-Newark-Jersey City",
           options = list(pageLength = 15))
+```
 
+**New York Metro Area Trends (2013-2023)**
+
+- **Rent burden improved slightly** from 22.6% (2013) to 22.2% (2023) 
+- The **Rent Burden Index decreased** from 59.2 to 58.1, indicating modest
+improvement relative to national standards 
+- **Best year:** 2019 (21.4%
+burden, 55.5 index) - likely due to strong income growth 
+- **Worst year:**
+2014 (22.9% burden, 60.3 index) 
+- **COVID impact:** 2021 saw a spike to
+22.7% as rents jumped faster than incomes
+
+```{r}
 # Table 2: Highest and lowest rent burden (2023)
 extreme_rent_burden <- rent_burden_data |>
     filter(year == max(year)) |>
@@ -727,6 +770,20 @@ datatable(extreme_rent_burden,
           caption = "CBSAs with Highest and Lowest Rent Burden (2023)")
 ```
 
+**National Extremes (2023)** 
+**Highest Burden** Cities (NIMBY
+characteristics):
+
+- **Florida dominates:** 7 of top 10 are Florida metros (Miami, Cape
+Coral, Tampa, etc.) 
+- **Clearlake, CA** has worst burden: 31.2% (index
+86.5) 
+- **Miami metro:** 30.1% burden despite high incomes (\$76K) -
+housing costs outpacing wages
+
+**Key Insight:** High-burden cities show classic NIMBY patterns - demand
+exceeds supply due to restrictive development.
+
 ## Task 5: Housing Growth Index
 
 ```{r task5-housing-growth}
@@ -749,13 +806,15 @@ housing_growth_data <- housing_growth_data |>
     filter(year >= 2014, !is.na(pop_growth_5yr))
 
 # Metric 1: Instantaneous housing growth
-# Permits per 1000 residents
+# Measures current construction activity relative to existing population
+# Permits per 1000 residents captures how aggressively a city is building
+# independent of whether population is growing or shrinking
 housing_growth_data <- housing_growth_data |>
     mutate(
         permits_per_1000 = (new_housing_units_permitted / population) * 1000
     )
 
-# Standardize metric 1
+# Standardize metric 1 to 0-100 scale (mean=50, sd=10)
 mean_perm_per_1000 <- mean(housing_growth_data$permits_per_1000, na.rm = TRUE)
 sd_perm_per_1000 <- sd(housing_growth_data$permits_per_1000, na.rm = TRUE)
 
@@ -767,7 +826,9 @@ housing_growth_data <- housing_growth_data |>
     )
 
 # Metric 2: Rate-based housing growth
-# Permits relative to population growth
+# Measures whether housing supply keeps pace with population increases
+# A ratio > 1 means more housing units than new residents (good for affordability)
+# Only calculated for growing metros (negative growth would give misleading ratios)
 housing_growth_data <- housing_growth_data |>
     mutate(
         permits_to_growth_ratio = ifelse(pop_growth_5yr > 0,
@@ -775,7 +836,7 @@ housing_growth_data <- housing_growth_data |>
                                         NA)
     )
 
-# Standardize metric 2
+# Standardize metric 2 to 0-100 scale
 mean_ratio <- mean(housing_growth_data$permits_to_growth_ratio, na.rm = TRUE)
 sd_ratio <- sd(housing_growth_data$permits_to_growth_ratio, na.rm = TRUE)
 
@@ -787,12 +848,21 @@ housing_growth_data <- housing_growth_data |>
     )
 
 # Composite score (weighted average)
+# 60% weight on instantaneous metric: Prioritizes absolute construction activity
+#    - Rewards cities actively building regardless of population trends
+#    - Important for increasing overall housing stock
+# 40% weight on rate-based metric: Ensures housing keeps pace with growth
+#    - Prevents scenarios where cities build a lot but still fall behind demand
+#    - Balances absolute construction with responsiveness to population changes
+# This weighting balances "building enough" with "building appropriately for growth"
 housing_growth_data <- housing_growth_data |>
     mutate(
         composite_housing_index = 0.6 * instant_housing_index + 
                                  0.4 * rate_housing_index
     )
+```
 
+```{r}
 # High scorers on instantaneous metric
 instant_high <- housing_growth_data |>
     filter(year == max(year)) |>
@@ -801,7 +871,22 @@ instant_high <- housing_growth_data |>
            `Instant Index` = instant_housing_index)
 
 datatable(instant_high, caption = "Top 10 CBSAs: Instantaneous Housing Growth (2023)")
+```
 
+**Instantaneous Growth (2023)** 
+
+**Top performers** building aggressively:
+
+1. **Myrtle Beach, SC:** 33.1 permits per 1,000 residents (100 index)
+
+2. **Salisbury, MD:** 37.7 permits per 1,000 (100 index) 
+
+3. **Punta Gorda, FL:** 21.5 permits per 1,000 (99.1 index)
+
+**Pattern:** Coastal resort/retirement destinations building rapidly to meet
+demand.
+
+```{r}
 # High scorers on rate-based metric
 rate_high <- housing_growth_data |>
     filter(year == max(year), !is.na(rate_housing_index)) |>
@@ -811,7 +896,20 @@ rate_high <- housing_growth_data |>
            `Rate Index` = rate_housing_index)
 
 datatable(rate_high, caption = "Top 10 CBSAs: Rate-Based Housing Growth (2023)")
+```
 
+**Rate-Based Growth (Efficiency)** 
+
+**Most efficient builders** (permits relative to population growth):
+
+1. **Springfield, OH:** 4.06 permits per growth unit (71.0 index) 
+
+2. **Urban Honolulu, HI:** 2.44 permits per growth unit (62.1 index)
+
+**Key Insight:** These cities build MORE housing than population growth
+requires, actively creating affordability buffers.
+
+```{r}
 # High scorers on composite
 composite_high <- housing_growth_data |>
     filter(year == max(year)) |>
@@ -824,6 +922,19 @@ composite_high <- housing_growth_data |>
 
 datatable(composite_high, caption = "Top 15 CBSAs: Composite Housing Growth (2023)")
 ```
+
+**Composite Index Leaders** 
+
+**Best overall growth strategies:**
+
+- **Punta Gorda, FL:** 79.3 composite (high instant + moderate efficiency)
+
+- **Crestview, FL:** 73.9 composite 
+
+- **North Port-Sarasota, FL:** 72.4 composite
+
+**Pattern:** Florida Gulf Coast metros dominate due to aggressive
+permitting + strong market demand.
 
 ## Task 6: YIMBY Analysis
 
@@ -853,7 +964,9 @@ recent_metrics <- yimby_data |>
         recent_pop_growth = mean(pop_growth_rate_5yr, na.rm = TRUE),
         .groups = "drop"
     )
+```
 
+```{r}
 # Identify YIMBY successes
 yimby_candidates <- early_rent |>
     inner_join(recent_metrics, by = c("GEOID", "NAME")) |>
@@ -892,7 +1005,28 @@ yimby_winners <- yimby_candidates |>
 datatable(yimby_winners, 
           caption = "YIMBY Success Stories: High Rent → Growing Population + Housing",
           options = list(pageLength = 10))
+```
 
+**YIMBY Success Stories (89 cities!)** **Characteristics of success:**
+
+Started with **high rent burden** (50-72%) **Reduced burden** by 2-9
+percentage points Achieved through **strong housing growth** (55-68
+composite index) Sustained **population growth** (3-23%)
+
+**Standout Examples:**
+
+1. **Hinesville, GA:** Reduced burden by 9.3 points (72.4% → 63.1%) Lake
+
+2. **Havasu, AZ:** Reduced burden by 8.2 points (67.4% → 59.1%) 
+
+3. **Athens, GA:** Reduced burden by 6.4 points while growing 7.1% 
+
+4. **Gainesville, FL:** Maintained growth (23%) while reducing burden despite starting at 69.7%
+
+**Formula for success:** Build housing faster than population grows → rents
+stabilize → affordability improves.
+
+```{r}
 # NIMBY cities (high rent, low housing growth)
 nimby_cities <- yimby_candidates |>
     filter(had_high_rent, !rent_decreased, high_housing_growth == FALSE) |>
@@ -909,6 +1043,34 @@ nimby_cities <- yimby_candidates |>
 datatable(nimby_cities,
           caption = "NIMBY Cities: High Rent + Low Housing Growth")
 ```
+
+**NIMBY Hall of Shame (10 cities) **
+
+**Miami-Fort Lauderdale leads the pack:**
+
+- **83.2 rent burden** (4th worst nationally) 
+
+- **49.9 housing growth** (below median) 
+
+- Growing population but NOT building enough housing
+
+**California dominates the list:**
+
+- Santa Maria-Santa Barbara (70.8 burden, 47.5 growth) 
+
+- Salinas (69.7
+burden, 45.2 growth) 
+
+- San Luis Obispo (67.9 burden, 49.8 growth)
+
+- Riverside-San Bernardino (65.4 burden, 48.5 growth)
+
+**Nevada's Las Vegas** (64.9 burden, 53.0 growth): Growing but not keeping
+pace with demand.
+
+**Key Insight:** These cities have high demand, high rents, BUT restrictive
+zoning/permitting prevents adequate housing supply → affordability
+crisis persists.
 
 ### Visualization 1: Rent Burden vs Housing Growth
 
@@ -1078,72 +1240,92 @@ if (nrow(common_industries) == 0) {
 }
 ```
 
----
+------------------------------------------------------------------------
 
-**TO:** Congressional Leadership  
-**FROM:** National YIMBY Coalition  
-**RE:** The Affordable Backyards Act - Building Housing for America's Future  
+**TO:** Congressional Leadership\
+**FROM:** National YIMBY Coalition\
+**RE:** The Affordable Backyards Act - Building Housing for America's
+Future\
 **DATE:** `r format(Sys.Date(), "%B %d, %Y")`
 
----
+------------------------------------------------------------------------
 
 ### Executive Summary
 
-We propose the **Affordable Backyards Act**, a federal matching grant program to incentivize local municipalities to adopt pro-housing policies. This bill addresses America's housing crisis by rewarding cities that permit housing construction proportional to population growth, reducing rent burdens for working families.
+We propose the **Affordable Backyards Act**, a federal matching grant
+program to incentivize local municipalities to adopt pro-housing
+policies. This bill addresses America's housing crisis by rewarding
+cities that permit housing construction proportional to population
+growth, reducing rent burdens for working families.
 
 ### Proposed Congressional Sponsors
 
-**Primary Sponsor:** Representative from **`r sponsor_yimby`**  
-This metropolitan area represents a YIMBY success story—maintaining affordable housing while experiencing population growth through strategic permitting policies.
+**Primary Sponsor:** Representative from **`r sponsor_yimby`**\
+This metropolitan area represents a YIMBY success story—maintaining
+affordable housing while experiencing population growth through
+strategic permitting policies.
 
-**Co-Sponsor:** Representative from **`r sponsor_nimby`**  
-This area faces significant housing challenges with high rent burdens. Federal support would help jumpstart local housing production and demonstrate bipartisan commitment to housing affordability.
+**Co-Sponsor:** Representative from **`r sponsor_nimby`**\
+This area faces significant housing challenges with high rent burdens.
+Federal support would help jumpstart local housing production and
+demonstrate bipartisan commitment to housing affordability.
 
 ### Labor & Industry Support
 
-This legislation benefits two critical employment sectors present in both districts:
+This legislation benefits two critical employment sectors present in
+both districts:
 
-**1. `r target_industry_1$level2_title`** (`r format(target_industry_1$yimby_emp + target_industry_1$nimby_emp, big.mark=",")` combined employees)
-- Workers currently spend excessive portions of income on rent
-- Lower housing costs = higher disposable income for quality of life improvements
-- Attracts talent to growing industries in both metros
+**1. `r target_industry_1$level2_title`**
+(`r format(target_industry_1$yimby_emp + target_industry_1$nimby_emp, big.mark=",")`
+combined employees) - Workers currently spend excessive portions of
+income on rent - Lower housing costs = higher disposable income for
+quality of life improvements - Attracts talent to growing industries in
+both metros
 
-**2. `r target_industry_2$level2_title`** (`r format(target_industry_2$yimby_emp + target_industry_2$nimby_emp, big.mark=",")` combined employees)
-- Housing affordability critical for recruitment and retention
-- Enables workers to live near employment centers
-- Reduces commute times and improves work-life balance
+**2. `r target_industry_2$level2_title`**
+(`r format(target_industry_2$yimby_emp + target_industry_2$nimby_emp, big.mark=",")`
+combined employees) - Housing affordability critical for recruitment and
+retention - Enables workers to live near employment centers - Reduces
+commute times and improves work-life balance
 
 ### Program Metrics
 
-**Rent Burden Index:** Measures housing affordability by comparing median rents to household incomes, normalized to national averages. Cities scoring above 50 face above-average rent pressure. The index accounts for local income variations, ensuring fair comparisons between high-wage coastal cities and lower-wage interior metros.
+**Rent Burden Index:** Measures housing affordability by comparing
+median rents to household incomes, normalized to national averages.
+Cities scoring above 50 face above-average rent pressure. The index
+accounts for local income variations, ensuring fair comparisons between
+high-wage coastal cities and lower-wage interior metros.
 
-**Housing Growth Index:** Evaluates cities on two dimensions:
-1. **Instantaneous growth:** New housing permits per 1,000 residents
-2. **Growth-adjusted rate:** Permits relative to population increase over 5-year periods
+**Housing Growth Index:** Evaluates cities on two dimensions: 1.
+**Instantaneous growth:** New housing permits per 1,000 residents 2.
+**Growth-adjusted rate:** Permits relative to population increase over
+5-year periods
 
-The composite score (60% instantaneous, 40% growth-adjusted) identifies cities building adequate housing stock for both current residents and newcomers.
+The composite score (60% instantaneous, 40% growth-adjusted) identifies
+cities building adequate housing stock for both current residents and
+newcomers.
 
 ### Grant Allocation Formula
 
-Cities receive federal matching funds based on:
-- **High Rent Burden (past):** Demonstrates need
-- **Decreasing Rent Burden (trend):** Shows policy effectiveness  
-- **High Housing Growth Index:** Indicates pro-housing local policies
-- **Population Growth:** Confirms economic vitality (not decline)
+Cities receive federal matching funds based on: - **High Rent Burden
+(past):** Demonstrates need - **Decreasing Rent Burden (trend):** Shows
+policy effectiveness\
+- **High Housing Growth Index:** Indicates pro-housing local policies -
+**Population Growth:** Confirms economic vitality (not decline)
 
 ### Expected Outcomes
 
-✓ Reduced rent burdens in high-cost metros  
-✓ Increased housing supply nationwide  
-✓ Economic growth through construction jobs  
-✓ Improved labor mobility and workforce participation  
+✓ Reduced rent burdens in high-cost metros\
+✓ Increased housing supply nationwide\
+✓ Economic growth through construction jobs\
+✓ Improved labor mobility and workforce participation\
 ✓ Bipartisan support through locally-driven solutions
 
----
+------------------------------------------------------------------------
 
 **For more information, contact:** National YIMBY Coalition Policy Team
 
----
+------------------------------------------------------------------------
 
 ## Supporting Tables for Policy Brief
 
@@ -1281,9 +1463,16 @@ datatable(industry_comparison,
 
 This analysis demonstrates that:
 
-1. **Housing affordability varies dramatically** across US metropolitan areas, with rent consuming vastly different shares of household income
-2. **YIMBY policies work**: Cities permitting more housing relative to population growth show decreasing rent burdens
-3. **Federal incentives can drive change**: Matching grants for cities with strong housing growth metrics would accelerate affordability improvements nationwide
-4. **Bipartisan opportunity exists**: Both high-growth YIMBY cities and struggling NIMBY cities benefit from increased housing production
+1.  **Housing affordability varies dramatically** across US metropolitan
+    areas, with rent consuming vastly different shares of household
+    income
+2.  **YIMBY policies work**: Cities permitting more housing relative to
+    population growth show decreasing rent burdens
+3.  **Federal incentives can drive change**: Matching grants for cities
+    with strong housing growth metrics would accelerate affordability
+    improvements nationwide
+4.  **Bipartisan opportunity exists**: Both high-growth YIMBY cities and
+    struggling NIMBY cities benefit from increased housing production
 
-The Affordable Backyards Act provides a data-driven, locally-flexible approach to America's housing crisis.
+The Affordable Backyards Act provides a data-driven, locally-flexible
+approach to America's housing crisis.
