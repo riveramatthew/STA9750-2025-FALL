@@ -4,6 +4,7 @@ author: "Matthew Rivera"
 date: today
 format:
   html:
+    self-contained: false
     code-fold: true
     toc: true
     toc-depth: 3
@@ -1068,7 +1069,7 @@ burden, 45.2 growth)
 **Nevada's Las Vegas** (64.9 burden, 53.0 growth): Growing but not keeping
 pace with demand.
 
-**Key Insight:** These cities have high demand, high rents, BUT restrictive
+** .gitignoreKey Insight:** These cities have high demand, high rents, BUT restrictive
 zoning/permitting prevents adequate housing supply → affordability
 crisis persists.
 
