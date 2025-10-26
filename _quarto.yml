@@ -1,7 +1,10 @@
 project:
   type: website
   output-dir: docs
-
+  render:
+    - "*.qmd"
+    - "!FinalProject.qmd"
+    
 website:
   title: "STA 9750 Portfolio"
   description: "Course Projects for STA 9750 at Baruch College"
@@ -27,11 +30,11 @@ website:
           href: mp03.qmd
         - text: "Mini-Project 04"
           href: mp04.qmd
-
 format:
   html:
-    theme: sandstone
+    theme: 
+      sandstone
+      custom.scss
     toc: false
-
 editor:
   mode: source
