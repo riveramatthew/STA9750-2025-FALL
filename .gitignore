@@ -33,3 +33,5 @@ data/**
 **/gganim*
 /.quarto/FinalProject.html
 *.html
+
+/.quarto/

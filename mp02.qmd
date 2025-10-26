@@ -2,342 +2,25 @@
 title: "Making Backyards Affordable for All: A YIMBY Analysis"
 author: "Matthew Rivera"
 date: today
-format:
+format: 
   html:
-    self-contained: true
+    toc: true
+    toc-depth: 3
     code-fold: true
-    code-summary: "Show the code"
-    code-tools: true
+    code-summary: "Show code"
     embed-resources: true
-    fig-width: 10
-    fig-height: 6.5
-    smooth-scroll: true
+editor: visual
 execute:
   warning: false
   message: false
-  cache: true
-editor: 
-  markdown: 
-    wrap: 72
+  echo: true
 ---
-
-```{css, echo=FALSE}
-/* ==================== YIMBY Theme Colors ==================== */
-:root {
-  --yimby-green: #2ecc71;
-  --yimby-dark-green: #27ae60;
-  --nimby-red: #e74c3c;
-  --nimby-dark-red: #c0392b;
-  --neutral-blue: #3498db;
-  --warm-beige: #f8f4e6;
-  --dark-charcoal: #2c3e50;
-  --light-gray: #ecf0f1;
-  --accent-gold: #f39c12;
-}
-
-/* ==================== Page Layout ==================== */
-body {
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  background: linear-gradient(135deg, var(--warm-beige) 0%, #ffffff 100%);
-  color: var(--dark-charcoal);
-  line-height: 1.7;
-}
-
-/* ==================== Header Styling ==================== */
-#title-block-header {
-  background: linear-gradient(135deg, var(--yimby-green) 0%, var(--yimby-dark-green) 100%) !important;
-  color: white !important;
-  padding: 3rem 2rem;
-  margin: -2rem -2rem 2rem -2rem;
-  border-radius: 0 0 20px 20px;
-  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-}
-
-#title-block-header .title {
-  font-size: 2.5rem;
-  font-weight: 700;
-  color: white !important;
-  text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
-  margin-bottom: 0.5rem;
-}
-
-#title-block-header .author,
-#title-block-header .date {
-  color: rgba(255,255,255,0.9) !important;
-  font-size: 1.1rem;
-}
-
-/* Override Quarto's default header styles */
-header#title-block-header {
-  background: linear-gradient(135deg, var(--yimby-green) 0%, var(--yimby-dark-green) 100%) !important;
-}
-
-.quarto-title-banner {
-  background: linear-gradient(135deg, var(--yimby-green) 0%, var(--yimby-dark-green) 100%) !important;
-}
-
-.quarto-title .title {
-  color: white !important;
-}
-
-.quarto-title-meta {
-  color: white !important;
-}
-
-.quarto-title-meta .author,
-.quarto-title-meta .date {
-  color: rgba(255,255,255,0.9) !important;
-}
-
-/* ==================== Section Headers ==================== */
-h1 {
-  color: var(--yimby-dark-green);
-  border-left: 5px solid var(--yimby-green);
-  padding-left: 1rem;
-  margin-top: 2.5rem;
-  font-weight: 700;
-}
-
-h2 {
-  color: var(--neutral-blue);
-  border-bottom: 2px solid var(--light-gray);
-  padding-bottom: 0.5rem;
-  margin-top: 2rem;
-}
-
-h3 {
-  color: var(--dark-charcoal);
-  margin-top: 1.5rem;
-  font-weight: 600;
-}
-
-/* ==================== Callout Boxes ==================== */
-.callout {
-  border-left: 4px solid var(--yimby-green);
-  background: linear-gradient(to right, rgba(46, 204, 113, 0.05), transparent);
-  padding: 1.5rem;
-  margin: 1.5rem 0;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-}
-
-.callout-yimby {
-  border-left-color: var(--yimby-green);
-  background: linear-gradient(to right, rgba(46, 204, 113, 0.08), transparent);
-}
-
-.callout-nimby {
-  border-left-color: var(--nimby-red);
-  background: linear-gradient(to right, rgba(231, 76, 60, 0.08), transparent);
-}
-
-.callout-insight {
-  border-left-color: var(--accent-gold);
-  background: linear-gradient(to right, rgba(243, 156, 18, 0.08), transparent);
-}
-
-/* ==================== Key Metrics Boxes ==================== */
-.metric-box {
-  background: white;
-  border-radius: 12px;
-  padding: 1.5rem;
-  margin: 1rem 0;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-  border-top: 4px solid var(--yimby-green);
-  transition: transform 0.2s, box-shadow 0.2s;
-}
-
-.metric-box:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 6px 16px rgba(0,0,0,0.12);
-}
-
-.metric-value {
-  font-size: 2.5rem;
-  font-weight: 700;
-  color: var(--yimby-dark-green);
-  line-height: 1;
-}
-
-.metric-label {
-  font-size: 0.9rem;
-  color: #7f8c8d;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  margin-top: 0.5rem;
-}
-
-/* ==================== Data Tables ==================== */
-.dataTables_wrapper {
-  background: white;
-  padding: 1.5rem;
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-  margin: 1.5rem 0;
-}
-
-table.dataTable thead th {
-  background: linear-gradient(135deg, var(--yimby-green), var(--yimby-dark-green));
-  color: white;
-  font-weight: 600;
-  padding: 1rem;
-  border: none;
-}
-
-table.dataTable tbody tr:hover {
-  background-color: rgba(46, 204, 113, 0.05);
-}
-
-/* ==================== Visualizations ==================== */
-.figure {
-  background: white;
-  padding: 1.5rem;
-  border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-  margin: 2rem 0;
-}
-
-/* ==================== Code Blocks ==================== */
-pre {
-  background: #2c3e50;
-  border-left: 4px solid var(--yimby-green);
-  border-radius: 8px;
-  padding: 1rem;
-}
-
-code {
-  background: rgba(46, 204, 113, 0.1);
-  padding: 0.2rem 0.4rem;
-  border-radius: 3px;
-  color: var(--yimby-dark-green);
-}
-
-/* ==================== Icons & Badges ==================== */
-.badge {
-  display: inline-block;
-  padding: 0.4rem 0.8rem;
-  border-radius: 20px;
-  font-size: 0.85rem;
-  font-weight: 600;
-  margin: 0.2rem;
-}
-
-.badge-yimby {
-  background: var(--yimby-green);
-  color: white;
-}
-
-.badge-nimby {
-  background: var(--nimby-red);
-  color: white;
-}
-
-.badge-neutral {
-  background: var(--neutral-blue);
-  color: white;
-}
-
-/* ==================== Section Dividers ==================== */
-hr {
-  border: none;
-  height: 2px;
-  background: linear-gradient(to right, transparent, var(--yimby-green), transparent);
-  margin: 3rem 0;
-}
-
-/* ==================== TOC Styling ==================== */
-#TOC {
-  background: white;
-  border-left: 3px solid var(--yimby-green);
-  box-shadow: -2px 0 8px rgba(0,0,0,0.05);
-}
-
-#TOC a {
-  color: var(--dark-charcoal);
-  transition: color 0.2s, padding-left 0.2s;
-}
-
-#TOC a:hover,
-#TOC a.active {
-  color: var(--yimby-dark-green);
-  padding-left: 1rem;
-  border-left: 3px solid var(--yimby-green);
-}
-
-/* ==================== Emphasis Elements ==================== */
-strong {
-  color: var(--yimby-dark-green);
-}
-
-em {
-  color: var(--neutral-blue);
-}
-
-blockquote {
-  border-left: 4px solid var(--accent-gold);
-  background: rgba(243, 156, 18, 0.05);
-  padding: 1rem 1.5rem;
-  margin: 1.5rem 0;
-  border-radius: 0 8px 8px 0;
-  font-style: italic;
-}
-
-/* ==================== Footnotes ==================== */
-.footnotes {
-  background: var(--light-gray);
-  padding: 2rem;
-  border-radius: 12px;
-  margin-top: 3rem;
-  border-top: 3px solid var(--yimby-green);
-}
-
-/* ==================== Mermaid Diagrams ==================== */
-.mermaid {
-  background: white;
-  padding: 2rem;
-  border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-}
-
-/* ==================== Responsive Design ==================== */
-@media (max-width: 768px) {
-  #title-block-header .title {
-    font-size: 1.8rem;
-  }
-  
-  .metric-value {
-    font-size: 2rem;
-  }
-  
-  h1 {
-    font-size: 1.8rem;
-  }
-}
-
-/* ==================== Print Styles ==================== */
-@media print {
-  body {
-    background: white;
-  }
-  
-  #title-block-header {
-    background: var(--yimby-dark-green);
-    color: white;
-  }
-  
-  .callout, .metric-box, .figure {
-    page-break-inside: avoid;
-  }
-}
-```
 
 # Introduction
 
 ::: {.callout .callout-insight}
 Policy Context: Housing affordability remains one of the most pressing challenges facing American cities today. This analysis examines metropolitan areas across the United States to identify "YIMBY" (Yes In My Backyard) success stories—cities that have effectively addressed housing affordability through permissive building policies.
 :::
-
-<image-card alt="Urban skyline at dusk" src="https://github.com/riveramatthew/STA9750-2025-FALL/blob/main/young_prof.jpeg" ></image-card>
 
 Using data from the US Census Bureau and Bureau of Labor Statistics, we develop metrics to measure rent burden and housing growth, ultimately identifying which cities have made meaningful progress in making housing more affordable.
 
@@ -679,7 +362,7 @@ erDiagram
     WAGES }o--o{ INDUSTRY_CODES : "INDUSTRY code"
 ```
 
-::: {.callout}
+::: callout
 Data Sources: We have successfully imported seven main datasets combining US Census Bureau (ACS) and Bureau of Labor Statistics (QCEW) data covering 2009-2023:
 
 -   **INCOME**: Household income by CBSA and year
@@ -691,10 +374,7 @@ Data Sources: We have successfully imported seven main datasets combining US Cen
 -   **INDUSTRY_CODES**: NAICS industry code lookup table
 :::
 
-**Key Join Keys:** - Census data uses `GEOID` (as character) and `NAME`
-(CBSA name) - BLS data uses `FIPS` (CBSA code as "C12345") - Permits
-data uses `CBSA` (as integer) - All datasets include `year` for temporal
-joins
+**Key Join Keys:** - Census data uses `GEOID` (as character) and `NAME` (CBSA name) - BLS data uses `FIPS` (CBSA code as "C12345") - Permits data uses `CBSA` (as integer) - All datasets include `year` for temporal joins
 
 # Data Integration and Initial Exploration
 
@@ -735,7 +415,7 @@ if(nrow(q1_result) > 0 && !is.na(q1_result$NAME[1])) {
 }
 ```
 
-:::{.callout .callout-yimby} 
+::: {.callout .callout-yimby}
 **Answer:** The **`r q1_result$NAME[1]`** metropolitan area permitted the largest number of new housing units between 2010 and 2019, with a total of **`r scales::comma(q1_result$total_permits[1])`** units. This surge underscores Dallas's role as a housing production powerhouse, driven by economic expansion, favorable business climate, and relatively permissive zoning that enabled developers to meet surging demand from both domestic migrants and international immigration.
 :::
 
@@ -768,16 +448,9 @@ albuquerque_permits |>
   )
 ```
 
-**Answer:** Albuquerque permitted the most new housing units in
-`r q2_result$year`, with`r scales::comma(q2_result$new_housing_units_permitted)` permits issued.
-This peak aligns with post-recession recovery as pent-up demand and low
-interest rates spurred construction. The subsequent decline through the
-2010s, with a notable 2020 dip due to COVID disruptions, highlights how
-external economic shocks can stall housing production even in affordable
-markets.
+**Answer:** Albuquerque permitted the most new housing units in `r q2_result$year`, with`r scales::comma(q2_result$new_housing_units_permitted)` permits issued. This peak aligns with post-recession recovery as pent-up demand and low interest rates spurred construction. The subsequent decline through the 2010s, with a notable 2020 dip due to COVID disruptions, highlights how external economic shocks can stall housing production even in affordable markets.
 
-**Note:** Be careful about the COVID-19 data artifact mentioned in the
-instructions.
+**Note:** Be careful about the COVID-19 data artifact mentioned in the instructions.
 
 ### Question 3: Which state (not CBSA) had the highest average individual income in 2015? To answer this question, you will need to first compute the total income per CBSA by multiplying the average household income by the number of households, and then sum total income and total population across all CBSAs in a state. With these numbers, you can answer this question.
 
@@ -829,15 +502,7 @@ q3_result |>
 ```
 
 ::: {.callout .callout-insight}
-**Answer:** `r q3_result$name[1]` had the highest average individual
-income in 2015 at
-`r scales::dollar(q3_result$avg_individual_income[1], accuracy = 1)`.
-This reflects the state's concentration of high-wage industries,
-educated workforce, and relatively high cost of living. The gap between
-top and bottom states (approximately
-`r scales::dollar(q3_result$avg_individual_income[1] - q3_result$avg_individual_income[nrow(q3_result)], accuracy = 1)`)
-underscores persistent regional economic disparities that housing policy
-alone cannot address.
+**Answer:** `r q3_result$name[1]` had the highest average individual income in 2015 at `r scales::dollar(q3_result$avg_individual_income[1], accuracy = 1)`. This reflects the state's concentration of high-wage industries, educated workforce, and relatively high cost of living. The gap between top and bottom states (approximately `r scales::dollar(q3_result$avg_individual_income[1] - q3_result$avg_individual_income[nrow(q3_result)], accuracy = 1)`) underscores persistent regional economic disparities that housing policy alone cannot address.
 :::
 
 ### Question 4: Data scientists and business analysts are recorded under NAICS code 5182. What is the last year in which the NYC CBSA had the most data scientists in the country? In recent, the San Francisco CBSA has had the most data scientists.
@@ -880,16 +545,7 @@ q4_result |>
   )
 ```
 
-**Answer:** NYC last had the most data scientists (NAICS 5182) in
-`r max(q4_result$YEAR[grepl("New York", q4_result$NAME)])`, with
-`r scales::comma(q4_result$EMPLOYMENT[grepl("New York", q4_result$NAME) & q4_result$YEAR == max(q4_result$YEAR[grepl("New York", q4_result$NAME)])])`
-employed. By
-`r min(q4_result$YEAR[grepl("San Francisco", q4_result$NAME)])`, San
-Francisco overtook the lead, reflecting the tech industry's westward
-migration and concentration in the Bay Area. This shift underscores how
-housing costs influence talent geography—NYC's persistently high rent
-burden (Index \~58) makes it increasingly difficult to retain young
-professionals despite higher nominal wages.
+**Answer:** NYC last had the most data scientists (NAICS 5182) in `r max(q4_result$YEAR[grepl("New York", q4_result$NAME)])`, with `r scales::comma(q4_result$EMPLOYMENT[grepl("New York", q4_result$NAME) & q4_result$YEAR == max(q4_result$YEAR[grepl("New York", q4_result$NAME)])])` employed. By `r min(q4_result$YEAR[grepl("San Francisco", q4_result$NAME)])`, San Francisco overtook the lead, reflecting the tech industry's westward migration and concentration in the Bay Area. This shift underscores how housing costs influence talent geography—NYC's persistently high rent burden (Index \~58) makes it increasingly difficult to retain young professionals despite higher nominal wages.
 
 ### Question 5: What fraction of total wages in the NYC CBSA was earned by people employed in the finance and insurance industries (NAICS code 52)? In what year did this fraction peak?
 
@@ -922,34 +578,15 @@ nyc_finance |>
 ```
 
 ::: {.callout .callout-insight}
-**Answer:** The finance and insurance sector (NAICS 52) peaked at
-`r scales::percent(peak_year$finance_fraction, accuracy = 0.1)` of total
-NYC metropolitan wages in `r peak_year$YEAR`. This dominance highlights
-Wall Street's role as the economic anchor of the region, generating tax
-revenue and supporting service industries. However, this concentration
-also creates vulnerability: when finance booms, housing costs surge and
-price out essential workers; when it contracts, the entire regional
-economy suffers. The decline to
-`r scales::percent(nyc_finance$finance_fraction[nyc_finance$YEAR == 2023], accuracy = 0.1)`
-by 2023 reflects both post-2008 regulatory changes and the rise of
-tech/healthcare sectors.
-::: 
+**Answer:** The finance and insurance sector (NAICS 52) peaked at `r scales::percent(peak_year$finance_fraction, accuracy = 0.1)` of total NYC metropolitan wages in `r peak_year$YEAR`. This dominance highlights Wall Street's role as the economic anchor of the region, generating tax revenue and supporting service industries. However, this concentration also creates vulnerability: when finance booms, housing costs surge and price out essential workers; when it contracts, the entire regional economy suffers. The decline to `r scales::percent(nyc_finance$finance_fraction[nyc_finance$YEAR == 2023], accuracy = 0.1)` by 2023 reflects both post-2008 regulatory changes and the rise of tech/healthcare sectors.
+:::
 
-**Key Takeaway:** NYC's finance sector commanded nearly one-third of all
-wages at its peak, underscoring Wall Street's dominance in the
-metropolitan economy. This concentration creates vulnerability: when
-finance thrives, the city prospers, but downturns ripple across all
-sectors. For housing policy, this means affordability pressures
-intensify during financial booms as high-earning workers compete for
-limited supply, pricing out essential service workers who keep the city
-running.
+**Key Takeaway:** NYC's finance sector commanded nearly one-third of all wages at its peak, underscoring Wall Street's dominance in the metropolitan economy. This concentration creates vulnerability: when finance thrives, the city prospers, but downturns ripple across all sectors. For housing policy, this means affordability pressures intensify during financial booms as high-earning workers compete for limited supply, pricing out essential service workers who keep the city running.
 
 ## Task 3: Initial Visualizations
 
-::: {.callout}
-Visuals aren't afterthoughts—they're the storytellers. Here, we plot
-relationships to intuit how income drives rents, healthcare scales with
-economies, and households evolve amid urbanization.
+::: callout
+Visuals aren't afterthoughts—they're the storytellers. Here, we plot relationships to intuit how income drives rents, healthcare scales with economies, and households evolve amid urbanization.
 :::
 
 ### Visualization 1: Rent vs. Household Income (2009)
@@ -983,10 +620,7 @@ ggplot(rent_income_2009, aes(x = household_income, y = monthly_rent)) +
   )
 ```
 
-**Interpretation:** A clear positive correlation emerges: as incomes
-rise, so do rents—often faster, per the slope \>1. Annotated outliers
-like San Jose (tech-driven highs) reveal how local economies amplify
-costs, setting the stage for burden metrics.
+**Interpretation:** A clear positive correlation emerges: as incomes rise, so do rents—often faster, per the slope \>1. Annotated outliers like San Jose (tech-driven highs) reveal how local economies amplify costs, setting the stage for burden metrics.
 
 ### Visualization 2: Total vs. Healthcare Employment Over Time
 
@@ -1032,11 +666,7 @@ ggplot(healthcare_employment,
   )
 ```
 
-**Interpretation:** Healthcare mirrors total employment on a log-log
-scale, confirming its role as a stable economic pillar. The plasma
-gradient reveals a post-2019 uptick in shares (annotated gold points),
-as aging populations and pandemics boosted demand—tying into
-affordability strains on essential workers.
+**Interpretation:** Healthcare mirrors total employment on a log-log scale, confirming its role as a stable economic pillar. The plasma gradient reveals a post-2019 uptick in shares (annotated gold points), as aging populations and pandemics boosted demand—tying into affordability strains on essential workers.
 
 ### Visualization 3: Household Size Evolution Over Time
 
@@ -1084,28 +714,13 @@ ggplot(household_size_subset, aes(x = year, y = household_size, group = NAME, co
   )
 ```
 
-**Interpretation:** Sizes hover at 2.5-3.0, with minimal
-decline—suggesting persistent family structures despite urban squeezes.
-NYC/LA's slight dips (highlighted) reflect immigration and high costs
-favoring smaller units, foreshadowing supply shortages.
+**Interpretation:** Sizes hover at 2.5-3.0, with minimal decline—suggesting persistent family structures despite urban squeezes. NYC/LA's slight dips (highlighted) reflect immigration and high costs favoring smaller units, foreshadowing supply shortages.
 
-**Section Summary:** These three visualizations establish the
-foundational relationships that drive our housing crisis. Income and
-rent move in lockstep—often with rent outpacing income growth.
-Healthcare employment scales predictably with city size, representing
-stable middle-class jobs vulnerable to housing cost shocks. Meanwhile,
-household sizes remain remarkably stable despite urbanization pressures,
-suggesting families adjust by moving away rather than cramming into
-smaller spaces. Together, these patterns reveal why simple market forces
-alone cannot solve affordability: the income-rent spiral accelerates
-faster than demographic adaptation, necessitating supply-side
-interventions that our indices will quantify.
+**Section Summary:** These three visualizations establish the foundational relationships that drive our housing crisis. Income and rent move in lockstep—often with rent outpacing income growth. Healthcare employment scales predictably with city size, representing stable middle-class jobs vulnerable to housing cost shocks. Meanwhile, household sizes remain remarkably stable despite urbanization pressures, suggesting families adjust by moving away rather than cramming into smaller spaces. Together, these patterns reveal why simple market forces alone cannot solve affordability: the income-rent spiral accelerates faster than demographic adaptation, necessitating supply-side interventions that our indices will quantify.
 
 # Building Indices
 
-Metrics transform raw data into actionable insights. Our Rent Burden
-Index normalizes costs against incomes; Housing Growth weighs
-construction against needs. Together, they diagnose policy impacts.
+Metrics transform raw data into actionable insights. Our Rent Burden Index normalizes costs against incomes; Housing Growth weighs construction against needs. Together, they diagnose policy impacts.
 
 ## Task 4: Rent Burden Index
 
@@ -1165,11 +780,7 @@ datatable(nyc_rent_burden,
 
 **New York Metro Area Trends (2013-2023)**
 
-Rent burden improved modestly from 22.6% (2009) to 22.2% (2023),
-dropping the Index from 59.2 to 58.1. The 2019 low (21.4%, Index 55.5)
-reflects wage gains outpacing rents; 2021's spike (22.7%) signals
-post-COVID rebound. This gradual thaw hints at policy wins—but sustained
-building is key to deeper relief.
+Rent burden improved modestly from 22.6% (2009) to 22.2% (2023), dropping the Index from 59.2 to 58.1. The 2019 low (21.4%, Index 55.5) reflects wage gains outpacing rents; 2021's spike (22.7%) signals post-COVID rebound. This gradual thaw hints at policy wins—but sustained building is key to deeper relief.
 
 ```{r}
 # Table 2: Highest and lowest rent burden (2023)
@@ -1202,11 +813,7 @@ datatable(extreme_rent_burden,
 
 **National Extremes (2023)**
 
-Florida metros (e.g., Miami at 30.1% burden, Index 83.2) dominate highs,
-where tourism inflates demand without supply. Lows like Pittsburgh
-(18.5%, Index 22.4) benefit from legacy affordability. NIMBY vibes in
-highs? Absolutely—restrictive zoning starves supply, perpetuating
-cycles.
+Florida metros (e.g., Miami at 30.1% burden, Index 83.2) dominate highs, where tourism inflates demand without supply. Lows like Pittsburgh (18.5%, Index 22.4) benefit from legacy affordability. NIMBY vibes in highs? Absolutely—restrictive zoning starves supply, perpetuating cycles.
 
 ## Task 5: Housing Growth Index
 
@@ -1297,11 +904,7 @@ instant_high |>
 
 **Instantaneous Growth (2023)**
 
-Coastal hotspots like Myrtle Beach (33.1/1,000, Index 100) build
-voraciously for retirees/tourists. This metric rewards action—vital for
-stock expansion, regardless of growth phase.
-
-<image-card alt="Urban skyline at dusk" src="https://github.com/riveramatthew/STA9750-2025-FALL/blob/main/modern_apart.jpeg" ></image-card>
+Coastal hotspots like Myrtle Beach (33.1/1,000, Index 100) build voraciously for retirees/tourists. This metric rewards action—vital for stock expansion, regardless of growth phase.
 
 ```{r}
 # High scorers on rate-based metric
@@ -1328,9 +931,7 @@ rate_high |>
 
 **Rate-Based Growth (Efficiency)**
 
-Springfield, OH (ratio 4.06, Index 71.0) overbuilds relative to inflows,
-buffering affordability. Efficiency ensures supply chases
-demand—preventing shortages in booms.
+Springfield, OH (ratio 4.06, Index 71.0) overbuilds relative to inflows, buffering affordability. Efficiency ensures supply chases demand—preventing shortages in booms.
 
 ```{r}
 # High scorers on composite
@@ -1358,28 +959,13 @@ composite_high |>
 
 **Composite Index Leaders**
 
-Florida's Gulf Coast (e.g., Punta Gorda at 79.3) blends vigor and
-smarts, fueling migration without crises. The 60/40 weighting
-prioritizes bold building while rewarding responsiveness— a YIMBY
-blueprint.
+Florida's Gulf Coast (e.g., Punta Gorda at 79.3) blends vigor and smarts, fueling migration without crises. The 60/40 weighting prioritizes bold building while rewarding responsiveness— a YIMBY blueprint.
 
-**Housing Growth Index Summary:** Our composite index reveals that
-housing production operates on two dimensions: absolute vigor (permits
-per capita) and responsive efficiency (permits relative to growth).
-Cities can score high on one but not both—Myrtle Beach builds
-voraciously for second homes (100 on instant metric) while Springfield,
-OH overbuilds relative to modest growth (71 on rate metric). The 60/40
-weighting reflects a key policy insight: cities must first *build*
-aggressively to expand total stock, but they must also build *smartly*
-to match demographic demand. Top composite scorers like Punta Gorda
-(79.3) achieve both, offering a replicable model for metros trapped in
-low-growth ruts.
+**Housing Growth Index Summary:** Our composite index reveals that housing production operates on two dimensions: absolute vigor (permits per capita) and responsive efficiency (permits relative to growth). Cities can score high on one but not both—Myrtle Beach builds voraciously for second homes (100 on instant metric) while Springfield, OH overbuilds relative to modest growth (71 on rate metric). The 60/40 weighting reflects a key policy insight: cities must first *build* aggressively to expand total stock, but they must also build *smartly* to match demographic demand. Top composite scorers like Punta Gorda (79.3) achieve both, offering a replicable model for metros trapped in low-growth ruts.
 
 ## Task 6: YIMBY Analysis
 
-YIMBY success? High early burdens + rent drops + growth + strong
-indices. We score accordingly, unearthing metros where policy unlocked
-affordability.
+YIMBY success? High early burdens + rent drops + growth + strong indices. We score accordingly, unearthing metros where policy unlocked affordability.
 
 ```{r task6-yimby}
 # Combine rent burden and housing growth metrics
@@ -1456,10 +1042,7 @@ datatable(yimby_winners,
 
 **YIMBY Triumphs (89 Metros Qualify!)**
 
-Hinesville, GA slashed burden 9.3 pts (72.4 → 63.1) via military-driven
-builds. Athens, GA grew 7.1% while easing 6.4 pts. Formula: Overbuild
-supply → stabilize rents → welcome growth. These aren't flukes; they're
-blueprints.
+Hinesville, GA slashed burden 9.3 pts (72.4 → 63.1) via military-driven builds. Athens, GA grew 7.1% while easing 6.4 pts. Formula: Overbuild supply → stabilize rents → welcome growth. These aren't flukes; they're blueprints.
 
 ```{r}
 # NIMBY cities (high rent, low housing growth)
@@ -1483,9 +1066,7 @@ datatable(nimby_cities,
 
 **NIMBY Hall of Shame (10 cities)**
 
-Miami (83.2 Index, 49.9 growth) grows but chokes on red tape.
-California's cluster (Santa Barbara 70.8, Salinas 69.7) exemplifies
-coastal lock-in. Lesson: Demand without density = distress.
+Miami (83.2 Index, 49.9 growth) grows but chokes on red tape. California's cluster (Santa Barbara 70.8, Salinas 69.7) exemplifies coastal lock-in. Lesson: Demand without density = distress.
 
 ### Visualization 1: Rent Burden vs Housing Growth
 
@@ -1538,9 +1119,7 @@ ggplot(viz_data_recent, aes(x = avg_rent_burden, y = avg_housing_growth)) +
     guides(color = guide_legend(ncol = 2))
 ```
 
-YIMBY green quadrant thrives where building eases burdens; red NIMBYs
-fester in stasis. Annotations flag outliers like Miami (red) vs. Punta
-Gorda (green).
+YIMBY green quadrant thrives where building eases burdens; red NIMBYs fester in stasis. Annotations flag outliers like Miami (red) vs. Punta Gorda (green).
 
 ### Visualization 2: Rent Burden Change Over Time
 
@@ -1578,30 +1157,15 @@ ggplot(viz_time_data, aes(x = year, y = rent_burden_index,
     )
 ```
 
-YIMBY lines trend down (solid); NIMBYs flatline (dashed). Hinesville's
-steep drop vs. Miami's stall? Pure policy divergence—building pays off.
+YIMBY lines trend down (solid); NIMBYs flatline (dashed). Hinesville's steep drop vs. Miami's stall? Pure policy divergence—building pays off.
 
-**YIMBY Analysis Summary:** The data validates a clear policy
-prescription: cities that permit aggressively while starting from
-high-rent baselines achieve measurable affordability gains. Our 89
-qualifying metros aren't random—they cluster in the Sunbelt, military
-towns, and college communities where zoning restrictions are lower and
-political resistance is weaker. Conversely, coastal California and
-Florida tourist metros exemplify the NIMBY trap: strong demand meets
-constrained supply, perpetuating crisis-level burdens (Miami, Santa
-Barbara both \>70 on the index). The divergence isn't destiny; it's
-choice. Hinesville's 9.3-point burden drop proves that even small metros
-can rapidly improve affordability when they prioritize housing
-production over aesthetic preservation. The question for policymakers:
-will your city follow the green quadrant or stay stuck in the red?
+**YIMBY Analysis Summary:** The data validates a clear policy prescription: cities that permit aggressively while starting from high-rent baselines achieve measurable affordability gains. Our 89 qualifying metros aren't random—they cluster in the Sunbelt, military towns, and college communities where zoning restrictions are lower and political resistance is weaker. Conversely, coastal California and Florida tourist metros exemplify the NIMBY trap: strong demand meets constrained supply, perpetuating crisis-level burdens (Miami, Santa Barbara both \>70 on the index). The divergence isn't destiny; it's choice. Hinesville's 9.3-point burden drop proves that even small metros can rapidly improve affordability when they prioritize housing production over aesthetic preservation. The question for policymakers: will your city follow the green quadrant or stay stuck in the red?
 
 # A New Chapter: Policy Solutions and Millennial Momentum
 
 ## Extra Credit: Attracting the Next Generation
 
-Before proposing national action, let's layer in a forward-looking
-element: how these dynamics appeal to millennials—the demographic
-driving tomorrow's growth.
+Before proposing national action, let's layer in a forward-looking element: how these dynamics appeal to millennials—the demographic driving tomorrow's growth.
 
 ```{r}
 #| include: false
@@ -1863,8 +1427,6 @@ datatable(
 )
 ```
 
-<image-card alt="Urban skyline at dusk" src="https://github.com/riveramatthew/STA9750-2025-FALL/blob/main/young_couple.jpeg" ></image-card>
-
 ```{r}
 # Integrate with YIMBY analysis
 # Add millennial appeal to YIMBY scoring
@@ -2062,23 +1624,23 @@ target_industry_2 <- if (nrow(common_industries) > 1) common_industries |> slice
 
 # Policy Brief: The Affordable Backyards Act
 
-**TO:** Congressional Leadership  
-**FROM:** National YIMBY Coalition  
-**RE:** Federal Housing Growth Incentive Program  
+**TO:** Congressional Leadership\
+**FROM:** National YIMBY Coalition\
+**RE:** Federal Housing Growth Incentive Program\
 **DATE:** `r format(Sys.Date(), "%B %d, %Y")`
 
 ------------------------------------------------------------------------
 
 ## Executive Summary
 
-America's housing crisis costs families over $2,000 annually in excess rent, limiting economic mobility and dampening growth. **The Affordable Backyards Act** establishes a $50 billion federal matching grant program to reward cities that adopt pro-housing policies and demonstrate measurable results. This bipartisan solution scales proven local successes nationwide.
+America's housing crisis costs families over \$2,000 annually in excess rent, limiting economic mobility and dampening growth. **The Affordable Backyards Act** establishes a \$50 billion federal matching grant program to reward cities that adopt pro-housing policies and demonstrate measurable results. This bipartisan solution scales proven local successes nationwide.
 
 ## Proposed Congressional Sponsors
 
-**Lead Sponsor:** Representative from **`r sponsor_yimby`**  
+**Lead Sponsor:** Representative from **`r sponsor_yimby`**\
 *YIMBY Success Story:* Reduced rent burden by `r abs(round(yimby_candidates |> filter(NAME == sponsor_yimby) |> pull(rent_burden_change), 1))` points while maintaining robust housing production (Growth Index: `r round(yimby_candidates |> filter(NAME == sponsor_yimby) |> pull(recent_housing_growth), 1)`) and `r scales::percent(yimby_candidates |> filter(NAME == sponsor_yimby) |> pull(recent_pop_growth), accuracy=0.1)` annual population growth.
 
-**Co-Sponsor:** Representative from **`r sponsor_nimby`**  
+**Co-Sponsor:** Representative from **`r sponsor_nimby`**\
 *High-Need Market:* Rent burden index of `r round(yimby_candidates |> filter(NAME == sponsor_nimby) |> pull(recent_rent_burden), 1)` (families spend approximately `r round((yimby_candidates |> filter(NAME == sponsor_nimby) |> pull(recent_rent_burden) - 50) * sd(rent_burden_data$rent_burden_pct, na.rm=TRUE) / 10 + mean(rent_burden_data$rent_burden_pct, na.rm=TRUE), 0)`% of income on rent) with insufficient housing supply (Growth Index: `r round(yimby_candidates |> filter(NAME == sponsor_nimby) |> pull(recent_housing_growth), 1)`) despite strong population demand.
 
 These metropolitan areas represent distinct economic profiles and political constituencies, demonstrating the universal applicability of pro-housing policies.
@@ -2086,11 +1648,13 @@ These metropolitan areas represent distinct economic profiles and political cons
 ## Industry Support: Shared Economic Interests
 
 ### 1. `r target_industry_1$level2_title` Sector
+
 **Combined Employment:** `r scales::comma(target_industry_1$yimby_emp + target_industry_1$nimby_emp, accuracy = 1)` workers across both districts
 
-Both metropolitan areas rely heavily on workers in this sector earning between $50,000-$70,000 annually—precisely the income range most squeezed by rising rents. In `r sponsor_yimby`, these workers face more manageable housing costs; in `r sponsor_nimby`, comparable workers face significantly higher rent burdens. **Our bill reduces this gap**, allowing employers to recruit and retain talent without constant wage pressure.
+Both metropolitan areas rely heavily on workers in this sector earning between \$50,000-\$70,000 annually—precisely the income range most squeezed by rising rents. In `r sponsor_yimby`, these workers face more manageable housing costs; in `r sponsor_nimby`, comparable workers face significantly higher rent burdens. **Our bill reduces this gap**, allowing employers to recruit and retain talent without constant wage pressure.
 
-### 2. `r target_industry_2$level2_title` Sector  
+### 2. `r target_industry_2$level2_title` Sector
+
 **Combined Employment:** `r scales::comma(target_industry_2$yimby_emp + target_industry_2$nimby_emp, accuracy = 1)` workers across both districts
 
 Both regions employ substantial workforces in this sector—middle-income jobs vulnerable to displacement. When housing costs consume smaller portions of household budgets, workers have more discretionary income to spend locally, creating a virtuous cycle. **Affordable housing strengthens the customer base** these industries depend upon while reducing employee turnover costs.
@@ -2101,19 +1665,17 @@ Both regions employ substantial workforces in this sector—middle-income jobs v
 
 **Housing Growth Index:** Combines two factors: (1) total building permits per 1,000 residents (60% weight) and (2) permits issued per new resident (40% weight). This composite measure rewards both absolute construction volume and smart growth that matches population trends.
 
-**Grant Eligibility:** Cities qualify by demonstrating:
-- Past affordability challenges (Burden Index > 60) OR
-- Strong recent improvement (3+ point reduction) OR  
-- Sustained housing production (Growth Index > 55) with population vitality
+**Grant Eligibility:** Cities qualify by demonstrating: - Past affordability challenges (Burden Index \> 60) OR - Strong recent improvement (3+ point reduction) OR\
+- Sustained housing production (Growth Index \> 55) with population vitality
 
 **Millennial Magnet Bonus:** Additional funding for cities scoring high on youth appeal factors—young adult population share, college graduation rates, creative economy jobs, and transit accessibility. Young professionals drive tomorrow's economic growth; cities that attract them deserve recognition.
 
 ## Projected Impact
 
-- **$1,200 annual savings** per family through 10% housing supply expansion
-- **1 million construction jobs** created over five years  
-- **5% GDP boost** from increased labor mobility and reduced cost burdens
-- **Bipartisan appeal:** Local control with federal support; proven successes lead, struggling markets catch up
+-   **\$1,200 annual savings** per family through 10% housing supply expansion
+-   **1 million construction jobs** created over five years\
+-   **5% GDP boost** from increased labor mobility and reduced cost burdens
+-   **Bipartisan appeal:** Local control with federal support; proven successes lead, struggling markets catch up
 
 ## Why These Sponsors Win
 
