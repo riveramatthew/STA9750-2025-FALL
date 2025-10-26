@@ -336,6 +336,9 @@ blockquote {
 ::: {.callout .callout-insight}
 Policy Context: Housing affordability remains one of the most pressing challenges facing American cities today. This analysis examines metropolitan areas across the United States to identify "YIMBY" (Yes In My Backyard) success stories—cities that have effectively addressed housing affordability through permissive building policies.
 :::
+
+<image-card alt="Urban skyline at dusk" src="https://github.com/riveramatthew/STA9750-2025-FALL/blob/main/young_prof.jpeg" ></image-card>
+
 Using data from the US Census Bureau and Bureau of Labor Statistics, we develop metrics to measure rent burden and housing growth, ultimately identifying which cities have made meaningful progress in making housing more affordable.
 
 # Data Acquisition
@@ -1298,6 +1301,8 @@ Coastal hotspots like Myrtle Beach (33.1/1,000, Index 100) build
 voraciously for retirees/tourists. This metric rewards action—vital for
 stock expansion, regardless of growth phase.
 
+<image-card alt="Urban skyline at dusk" src="https://github.com/riveramatthew/STA9750-2025-FALL/blob/main/modern_apart.jpeg" ></image-card>
+
 ```{r}
 # High scorers on rate-based metric
 rate_high <- housing_growth_data |>
@@ -1858,6 +1863,8 @@ datatable(
 )
 ```
 
+<image-card alt="Urban skyline at dusk" src="https://github.com/riveramatthew/STA9750-2025-FALL/blob/main/young_couple.jpeg" ></image-card>
+
 ```{r}
 # Integrate with YIMBY analysis
 # Add millennial appeal to YIMBY scoring
@@ -1949,6 +1956,7 @@ ggplot(viz_millennial, aes(x = avg_rent_burden, y = avg_magnet_index)) +
 ```{r}
 # Explicitly load dplyr (redundant but ensures scope)
 library(dplyr)
+library(tidyverse)
 
 # Safely identify sponsor cities with fallbacks
 if (exists("yimby_winners") && nrow(yimby_winners) > 0) {
