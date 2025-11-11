@@ -1,0 +1,108 @@
+/* =============================================================================
+   FINAL INDIVIDUAL REPORT – CUSTOM STYLES (November 2025)
+   Drop this file next to your .Rmd and add css: styles.css in YAML
+   ============================================================================= */
+
+body {
+  font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+  line-height: 1.7;
+  color: #333;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 20px;
+  background: #fafafa;
+}
+
+h1, h2, h3, h4 {
+  color: #2c3e50;
+  margin-top: 1.8em;
+  border-bottom: 2px solid #e74c3c;
+  padding-bottom: 8px;
+}
+
+h1 {
+  font-size: 2.4em;
+  text-align: center;
+  color: #e74c3c;
+  border-bottom: 4px solid #e74c3c;
+}
+
+h2 {
+  font-size: 1.9em;
+  color: #27ae60;
+  border-bottom: 2px solid #27ae60;
+}
+
+/* Make your high-risk tree map pop */
+img {
+  border: 3px solid #e74c3c;
+  border-radius: 10px;
+  box-shadow: 0 6px 16px rgba(0,0,0,0.15);
+  display: block;
+  margin: 25px auto;
+  max-width: 100%;
+}
+
+/* Code blocks – clean and readable */
+pre, code {
+  font-family: "Fira Code", "Consolas", monospace;
+  background: #2c3e50;
+  color: #f8f8f2;
+  border-radius: 6px;
+}
+
+pre {
+  padding: 16px;
+  overflow-x: auto;
+  border: 1px solid #34495e;
+}
+
+/* Blockquotes for key insights */
+blockquote {
+  background: #e74c3c15;
+  border-left: 6px solid #e74c3c;
+  margin: 2em 0;
+  padding: 1.2em 1.8em;
+  border-radius: 0 8px 8px 0;
+  font-style: italic;
+  color: #555;
+}
+
+/* Table polish */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 25px 0;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+th {
+  background: #e74c3c;
+  color: white;
+  padding: 12px;
+  text-align: left;
+}
+
+td {
+  padding: 10px 12px;
+  border-bottom: 1px solid #ddd;
+}
+
+tr:nth-child(even) {
+  background: #f9f9f9;
+}
+
+/* Footer caption style */
+.caption {
+  text-align: center;
+  font-size: 0.9em;
+  color: #7f8c8d;
+  margin-top: 40px;
+}
+
+/* Responsive images on small screens */
+@media (max-width: 768px) {
+  body { padding: 10px; }
+  h1 { font-size: 2em; }
+  img { border-width: 2px; }
+}

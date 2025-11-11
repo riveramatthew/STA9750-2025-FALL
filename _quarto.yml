@@ -35,6 +35,6 @@ format:
     theme: 
       sandstone
       custom.scss
-    toc: false
+    toc: true
 editor:
   mode: source
