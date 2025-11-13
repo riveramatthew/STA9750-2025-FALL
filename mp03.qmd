@@ -1,22 +1,201 @@
 ---
-title: "Safe Canopy Initiative: Protecting NYC’s Urban Forest in Council District 3"
+title: "Visualizing and Maintaining the Green Canopy of NYC"
+subtitle: "STA 9750 • Mini-Project #03"
 author: "Matthew Rivera"
-date: "November 10, 2025"
+date: "`r Sys.Date()`"
 format:
   html:
+    output-dir: docs
     toc: true
     toc-depth: 2
     code-fold: true
     code-summary: "Show code"
     embed-resources: true
-    theme: cosmo
-    highlight-style: github
-    css: styles.css
+    self-contained: false
+editor: visual
 execute:
   cache: true
   warning: false
   message: false
+quarto:
+  post-render: 
+    - command: ["open", "mp03.html"]
 ---
+
+```{=html}
+<style>
+/* ==========================================================================
+   STA 9750 Mini-Project #03: NYC Green Canopy
+   Custom Styles – Urban Forestry Theme
+   ========================================================================== */
+:root {
+  --green-dark: #1a5d1a;
+  --green-mid: #2d7d32;
+  --green-light: #81c784;
+  --earth-brown: #8d6e63;
+  --sky-blue: #e3f2fd;
+  --text: #212529;
+  --bg: #fafafa;
+  --accent: #43a047;
+  --border: #c8e6c9;
+}
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  line-height: 1.7;
+  color: var(--text);
+  background-color: var(--bg);
+  margin: 0;
+  padding: 0;
+}
+.main-container {
+  max-width: 1000px;
+  margin: 2rem auto;
+  padding: 0 1.5rem;
+}
+/* Header & Title */
+h1, h2, h3, h4 {
+  color: var(--green-dark);
+  font-weight: 600;
+  margin-top: 1.8rem;
+  border-bottom: 2px solid var(--border);
+  padding-bottom: 0.4rem;
+}
+h1 {
+  font-size: 2.2rem;
+  text-align: center;
+  color: var(--green-mid);
+  margin-bottom: 1rem;
+  position: relative;
+}
+h1::after {
+  content: "Tree";
+  margin-left: 10px;
+  font-size: 1.4rem;
+}
+/* Project Title Styling */
+.title {
+  text-align: center;
+  font-size: 2.4rem !important;
+  color: var(--green-dark);
+  margin: 1.5rem 0;
+  font-weight: 700;
+}
+.subtitle {
+  text-align: center;
+  color: var(--earth-brown);
+  font-style: italic;
+  margin-bottom: 2rem;
+}
+/* Links */
+a {
+  color: var(--accent);
+  text-decoration: none;
+  font-weight: 500;
+}
+a:hover {
+  text-decoration: underline;
+  color: var(--green-mid);
+}
+/* Code blocks */
+pre, code {
+  background-color: #f5f5f5;
+  border-left: 4px solid var(--green-mid);
+  padding: 0.8rem;
+  border-radius: 4px;
+  font-family: 'Courier New', monospace;
+  font-size: 0.95rem;
+}
+pre {
+  overflow-x: auto;
+  margin: 1.2rem 0;
+}
+/* Blockquotes – for key insights */
+blockquote {
+  background-color: var(--sky-blue);
+  border-left: 5px solid var(--green-mid);
+  margin: 1.5rem 0;
+  padding: 1rem 1.2rem;
+  border-radius: 0 4px 4px 0;
+  font-style: italic;
+  color: #2c3e50;
+}
+/* Tables */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1.5rem 0;
+  font-size: 0.95rem;
+}
+th {
+  background-color: var(--green-light);
+  color: #fff;
+  padding: 0.8rem;
+  text-align: left;
+  font-weight: 600;
+}
+td {
+  padding: 0.7rem;
+  border-bottom: 1px solid #ddd;
+}
+tr:nth-child(even) {
+  background-color: #f9f9f9;
+}
+tr:hover {
+  background-color: #f1f8e9;
+}
+/* Images & Figures */
+img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 6px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+  margin: 1.2rem 0;
+  display: block;
+}
+.figure-caption {
+  text-align: center;
+  font-style: italic;
+  color: #555;
+  margin-top: 0.5rem;
+  font-size: 0.9rem;
+}
+/* Callouts (if using Quarto callouts) */
+.callout-tip, .callout-note, .callout-warning {
+  border-left: 5px solid;
+  padding: 1rem;
+  margin: 1.5rem 0;
+  border-radius: 4px;
+  background-color: #f9f9f9;
+}
+.callout-tip {
+  border-color: var(--green-mid);
+  background-color: #e8f5e9;
+}
+.callout-note {
+  border-color: #1976d2;
+}
+.callout-warning {
+  border-color: #ff8f00;
+}
+/* Footer */
+.footer {
+  text-align: center;
+  margin-top: 3rem;
+  padding: 1.5rem;
+  color: #666;
+  font-size: 0.9rem;
+  border-top: 1px solid #eee;
+}
+/* Responsive */
+@media (max-width: 768px) {
+  .main-container {
+    padding: 0 1rem;
+  }
+  h1 { font-size: 1.8rem; }
+  .title { font-size: 2rem; }
+}
+</style>
+```
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
@@ -36,10 +215,6 @@ library(htmlwidgets)
 library(gt)
 library(gtExtras)
 ```
-
-::: {.hero}
-![](https://images.unsplash.com/photo-1533038590847-04c9e0e6d17e?auto=format&fit=crop&w=1600&q=80){.hero-img}
-:::
 
 ## Introduction
 
@@ -188,6 +363,8 @@ leaflet(trees_districts) %>%
 
 ## Task 4: District-Level Analysis
 
+Which council district has the most trees?
+
 ```{r analysis_calculations, include=FALSE}
 most_trees <- trees_districts %>%
   st_drop_geometry() %>%
@@ -204,6 +381,10 @@ district_area <- districts_simp %>%
   mutate(Shape_Area = as.numeric(Shape_Area))
 ```
 
+District areas range from `r min(district_area$Shape_Area) |> round(2)` to `r max(district_area$Shape_Area) |> round(2)` square feet.
+
+Which council district has the highest density of trees? The Shape_Area column from the district shape file will be helpful here.
+
 ```{r}
 density_summary <- trees_districts %>%
   st_drop_geometry() %>%
@@ -216,6 +397,8 @@ highest_density <- density_summary %>% slice_max(density_per_sqft, n = 1)
 ```
 
 Highest density: **District `r highest_density$cncldist`** with **`r round(highest_density$density_per_sqft, 8)` trees per square foot**
+
+Which district has highest fraction of dead trees out of all trees?
 
 ```{r dead_fraction_calc, include=FALSE}
 dead_fraction <- trees_districts %>%
@@ -230,6 +413,8 @@ dead_fraction <- trees_districts %>%
 
 District `r dead_fraction$cncldist` (`r scales::percent(dead_fraction$frac_dead, accuracy = 0.1)`)
 
+What is the most common tree species in Manhattan?
+
 ```{r}
 manhattan_species <- trees_districts %>%
   st_drop_geometry() %>%
@@ -239,6 +424,8 @@ manhattan_species <- trees_districts %>%
 ```
 
 `r manhattan_species$spc_common` (`r format(manhattan_species$n, big.mark=",")` trees)
+
+What is the species of the tree closest to Baruch’s campus?
 
 ```{r}
 baruch_point <- st_point(c(-73.9840, 40.7359)) %>% st_sfc(crs = 4326)
@@ -253,10 +440,10 @@ Closest tree to Baruch College `r closest_tree$spc_common` at `r closest_tree$ad
 
 ### Safe Canopy Initiative: High-Risk Tree Remediation in City Council District 3
 
-**Submitted by:** Your Name, Data Analyst – Council Member [Name]  
-**Date:** November 10, 2025
+**Project Description & Scope**
 
-#### Project Description & Scope
+As a staffer for Council Member Erik Bottcher in District 3 (Chelsea, Hell's Kitchen, and Greenwich Village), I propose the "Safe Canopy Initiative" – a targeted program to inspect and maintain high-problem street trees to prevent branch failures and improve pedestrian safety in our dense urban district.
+
 Launch a **$350,000 pilot** to inspect and remediate **150 high-risk trees (≥3 structural conflicts)** in District 3 during FY2026.  
 **Remediation hierarchy:** prune → cable → remove & replace (3:1 ratio).  
 Includes **two community tree-care workshops**.
@@ -333,54 +520,7 @@ ggplot(comp, aes(cncldist, pct_high)) +
 - Equity: serves NYCHA residents (Fulton Houses, Penn South)
 - Scalable model for Districts 7, 9, 12
 
-#### Budget Breakdown
-
-```{r budget_table}
-tibble(
-  Item = c("Tree Inspections (150 × $800)", "Pruning/Cabling (120 trees)", 
-           "Removal & Replacement (30 trees × $3,500)", "Community Workshops (2 × $5,000)", 
-           "Project Management & Reporting", "TOTAL"),
-  Cost = c(120000, 96000, 105000, 10000, 18000, 349000)
-) %>%
-  mutate(Cost = if_else(Item == "TOTAL", NA_real_, Cost)) %>%
-  gt() %>%
-  fmt_currency(columns = Cost, rows = !is.na(Cost)) %>%
-  fmt_currency(columns = Cost, rows = Item == "TOTAL", currency = "USD") %>%
-  tab_style(style = cell_fill(color = "#e8f4f8"), locations = cells_body(rows = Item == "TOTAL")) %>%
-  tab_style(style = cell_text(weight = "bold"), locations = cells_body(rows = Item == "TOTAL")) %>%
-  tab_header(title = "Safe Canopy Initiative: FY2026 Budget ($350,000)")
-```
-
 ## Extra Credit: DPR Risk & Maintenance Data
-
-```{r extra_credit_download}
-download_parks <- function(url, file) {
-  if (file.exists(file)) return(read_csv(file, show_col_types = FALSE))
-  message("Downloading ", basename(file), "...")
-  request(url) %>% req_perform(path = file)
-  read_csv(file, show_col_types = FALSE)
-}
-
-risk <- download_parks("https://data.cityofnewyork.us/api/views/259a-b6s7/rows.csv?accessType=DOWNLOAD",
-                       "data/mp03/risk.csv")
-```
-
-```{r risk_join}
-library(dplyr)
-library(sf)
-
-# 1. Find the actual spatial file in your folder
-list.files("data/mp03", recursive = TRUE, full.names = TRUE)
-
-# 2. Look for files ending in .shp, .gpkg, .geojson, .gdb
-# Common ones in MP03:
-#   "nyc_trees_2025.shp"
-#   "Tree_Points.shp"
-#   "trees.geojson"
-
-# RUN THIS — it will show you the exact path:
-list.files("data/mp03", pattern = "shp|gpkg|geojson|gdb", recursive = TRUE, full.names = TRUE)
-```
 
 ```{r}
 # --- STA 9750 MP03 — FINAL WORKING CODE (GUARANTEED 152 TREES) ---
@@ -421,9 +561,6 @@ risk_d3 <- risk_sf %>%
 n_high <- sum(risk_d3$RiskRating >= 8, na.rm = TRUE)
 n_total <- nrow(risk_d3)
 prop <- round(mean(risk_d3$RiskRating >= 8, na.rm = TRUE), 4)
-
-cat("District 3 has", n_high, "high/extreme risk trees out of", n_total, "\n")
-cat("Proportion =", prop, "\n")
 ```
 
 ```{r}
@@ -446,35 +583,8 @@ ggplot() +
 
 **Finding:** Of trees in District 3 with DPR risk scores, **18% are High/Extreme risk** — confirming urgent need.
 
-```{r risk_bar}
-risk_summary <- risk %>%
-  mutate(risk_level = case_when(
-    RiskRating <= 4 ~ "Low",
-    RiskRating <= 7 ~ "Moderate",
-    RiskRating <= 10 ~ "High",
-    TRUE ~ "Extreme"
-  )) %>%
-  count(risk_level, name = "n") %>%
-  mutate(pct = n / sum(n))
-
-ggplot(risk_summary, aes(reorder(risk_level, pct), pct)) +
-  geom_col(fill = "#e74c3c", alpha = 0.8) +
-  geom_text(aes(label = percent(pct, 0.1)), vjust = -0.5, fontface = "bold") +
-  coord_flip() +
-  scale_y_continuous(labels = percent_format()) +
-  labs(title = "DPR Risk Levels (Citywide)", x = "Risk Level", y = "Proportion") +
-  theme_minimal(base_size = 14)
-```
-
 ## Conclusion
 
 The **Safe Canopy Initiative** uses 2015 census data, real-time DPR risk scores, and spatial visualization to target the **150 most dangerous trees** in NYC’s densest canopy. This pilot will reduce liability, preserve green infrastructure, and establish a **replicable, equitable model** for urban forestry.
 
 **Ready for immediate implementation in FY2026.**
-
-### Optional: Create `styles.css` for extra polish
-```{css}
-.hero { text-align: center; margin: 20px 0; }
-.hero-img { max-width: 100%; border-radius: 12px; box-shadow: 0 8px 20px rgba(0,0,0,0.15); }
-body { font-family: 'Segoe UI', sans-serif; }
-```
