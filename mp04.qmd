@@ -66,110 +66,20 @@ head(employment_api)
 ## Task 2: CES Revisions (1979–2025)
 
 ```{r task2}
-# Load required libraries
-library(httr2)
-library(rvest)
-library(dplyr)
-library(stringr)
-library(lubridate)
-library(purrr)
-
-get_bls_html <- function(url) {
-  req <- request(url) |>
-    req_headers(
-      "User-Agent" = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
-      "Accept" = "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
-      "Accept-Language" = "en-US,en;q=0.5",
-      "Connection" = "keep-alive",
-      "Referer" = "https://www.bls.gov/",
-      "Upgrade-Insecure-Requests" = "1"
-    )
-  
-  resp <- req_perform(req)
-  resp |> resp_body_html()
-}
-
-#--- 2. Table Extraction Function by Year ---
-extract_ces_year <- function(html, year) {
-  # The page has one table per year. Identify by year pattern.
-  # Sometimes tables are not explicitly labeled so this selects by table containing the year.
-  table_node <- html |> html_elements("table")
-  year_table <- table_node[which(str_detect(html_text(table_node), as.character(year)))][1]
-  # If not found, return empty dataframe
-  if (is.na(year_table)) return(tibble(date = as.Date(NA), original = NA, final = NA, revision = NA))
-  
-  # Read table and set correct columns manually, ignoring header mess.
-  df <- html_table(year_table, header = FALSE, fill = TRUE)
-  # Keep only first 12 rows; format varies (sometimes extra rows at end)
-  df <- df |> slice(1:12)
-  # Expect columns: Month, Year, 1st, 3rd estimates
-  df <- df |> transmute(
-    date = ym(paste(df[[1]], year)),        # Month col + year
-    original = as.numeric(df[[3]]),         # 1st estimate col
-    final    = as.numeric(df[[5]]),         # 3rd estimate col
-    revision = final - original
-  )
-  df
-}
-
-#--- 3. Download and Extract for All Years (1979-2025) ---
-url <- "https://www.bls.gov/web/empsit/cesnaicsrev.htm"
-bls_html <- get_bls_html(url)
-
-# Vector of years and limit for June 2025
-years <- 1979:2025
-# For incomplete 2025 table, only take first 6 months
-extract_ces_year <- function(html, year) {
-  year_id <- as.character(year)
-  # Find the <table> node with that year's ID
-  table_node <- html_element(html, paste0("table#", year_id))
-  
-  # If not found, return empty tibble (avoid passing NA to html_table)
-  if (is.na(table_node) || is.null(table_node)) {
-    return(tibble(date = as.Date(character()), original = numeric(), final = numeric(), revision = numeric()))
-  }
-
-  # Read table data
-  df_list <- html_table(table_node, header = FALSE, fill = TRUE)
-  df <- if (is.list(df_list)) df_list[[1]] else df_list
-  n_to_keep <- min(12, nrow(df))
-  df <- df |> slice(1:n_to_keep)
-
-  # Clean and normalize month
-  month_clean <- str_trim(df[[1]]) |> str_sub(1, 3)
-  month_clean[!month_clean %in% month.abb] <- NA
-
-  # Final transformation
-  df <- df |> transmute(
-    date = ym(paste(month_clean, year)),
-    original = suppressWarnings(as.numeric(df[[3]])),
-    final    = suppressWarnings(as.numeric(df[[5]])),
-    revision = final - original
-  )
-  df
-}
-
-# Extract tbody
-tbody <- html_element(tbl_2023, "tbody")
-# Get all row nodes
-rows <- html_elements(tbody, "tr")
-
-# For each row, extract all 'th' (first cell) and 'td' (other cells) values
-data_list <- lapply(rows, function(row) {
-  # Some tables use <th> for the first column (month), others use <td>
-  cells <- html_elements(row, xpath = ".//th | .//td")
-  html_text(cells, trim = TRUE)
-})
-
-# Remove rows where data does not represent a month (avoid summary rows at the end)
-month_rows <- data_list[1:12]
-
-# Convert to a data frame
-df <- as.data.frame(do.call(rbind, month_rows), stringsAsFactors = FALSE)
-# Assign column names manually
-colnames(df) <- c("Month", "Year", "First", "Second", "Third")
-
-print(df)
+library(httr2); library(rvest); library(dplyr); library(lubridate)
+u <- "https://www.bls.gov/web/empsit/cesnaicsrev.htm"
+h <- request(u) |> req_headers("User-Agent"="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36","Accept"="text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8","Accept-Language"="en-US,en;q=0.5","Referer"="https://www.bls.gov/") |> req_perform() |> resp_body_html()
+ces <- map_dfr(1979:year(today()), \(y) {
+  t <- html_element(h, paste0("table#", y)) |> html_table(header=F)
+  if(is.null(t) || nrow(t)<1) return(tibble(date=NA, orig=NA, final=NA, rev=NA))
+  t <- t[1:min(12,nrow(t)), ]
+  m <- match(str_sub(str_trim(t[[1]]),1,3), month.abb)
+  tibble(date = as.Date(paste(y,m,"01"), "%Y %m %d"),
+         orig = suppressWarnings(as.numeric(gsub("[^0-9.-]","",t[[3]]))),
+         final = suppressWarnings(as.numeric(gsub("[^0-9.-]","",t[[5]]))),
+         rev = final - orig) |> filter(!is.na(date))
+}) |> filter(!is.na(orig)) |> arrange(date)
+tail(ces, 12)
 ```
 
 ## Join the datasets
