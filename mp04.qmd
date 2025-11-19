@@ -290,9 +290,9 @@ Pre-2000: `r round(0.348, 3)*100`% negative; post-2000: `r round(0.455, 3)*100`%
 
 **Fact Check: Mostly False**
 
-- Largest single revision ever: `r ces_full |> slice_max(abs_revision, n=1) |> pull(revision)/1000` thousand jobs (Mar 2020, pandemic shock)
-- Average absolute revision (2020–2025): `r ces_full |> filter(year(date) >= 2020) |> summarise(mean(abs_revision)/1000) |> pull() |> round(1)` thousand
-- Average absolute revision (1979–2019): `r ces_full |> filter(year(date) < 2020) |> summarise(mean(abs_revision)/1000) |> pull() |> round(1)` thousand
+- Largest single revision ever: `r joined_data |> slice_max(order_by = abs(rev), n = 1) |> pull(rev) / 1000 |> round(0)` thousand jobs (`r joined_data |> slice_max(order_by = abs(rev), n = 1) |> pull(date) |> format("%b %Y")`, pandemic shock)
+- Average absolute revision (2020–2025): `r joined_data |> filter(year(date) >= 2020) |> summarise(mean(abs(rev)) / 1000) |> pull() |> round(1)` thousand
+- Average absolute revision (1979–2019): `r joined_data |> filter(year(date) < 2020) |> summarise(mean(abs(rev)) / 1000) |> pull() |> round(1)` thousand
 - Relative revision as % of employment is **smaller** today than in the 1980s–1990s (see plot above)
 
 While some recent absolute revisions are large in raw numbers, they are **not** unusually large relative to the size of the labor force. The claim ignores population growth.
@@ -304,8 +304,8 @@ While some recent absolute revisions are large in raw numbers, they are **not** 
 
 **Fact Check: Pants on Fire**
 
-- Fraction of downward revisions 2021–2024: `r ces_full |> filter(between(year(date), 2021, 2024)) |> summarise(mean(revision < 0)) |> pull() |> percent(accuracy = 0.1)`
-- Historical average (1979–2020): `r ces_full |> filter(year(date) <= 2020) |> summarise(mean(revision < 0)) |> pull() |> percent(accuracy = 0.1)`
+- Fraction of downward revisions 2021–2024: `r joined_data |> filter(between(year(date), 2021, 2024)) |> summarise(mean(rev < 0, na.rm = TRUE)) |> pull() |> scales::percent(accuracy = 0.1)`
+- Historical average (1979–2020): `r joined_data |> filter(year(date) <= 2020) |> summarise(mean(rev < 0, na.rm = TRUE)) |> pull() |> scales::percent(accuracy = 0.1)`
 
 Downward revisions were more common under Biden than average, but far from 100%. Many months had upward revisions.
 
@@ -318,15 +318,3 @@ Revisions to the CES jobs report are a normal, expected, and transparent part of
 The firing of Commissioner McEntarfer appears to have been based on a misunderstanding (or misrepresentation) of standard statistical practice rather than evidence of wrongdoing.
 
 Data and code: https://github.com/yourusername/STA9750-2025-FALL
-```
-
-This template:
-
-- Uses only **httr2** + **rvest** (no manual CSV, no blsAPI, no fredr)
-- Fully automates both datasets from 1979 to mid-2025
-- Includes all required tasks
-- Has publication-quality tables & animated visualization
-- Contains two real-world-style fact checks with hypothesis tests
-- Clean, commented, styler-compliant code
-
-Just replace `"Your Name"` and your GitHub username, run it, and submit. Good luck — this will easily score in the 9–10 range!
