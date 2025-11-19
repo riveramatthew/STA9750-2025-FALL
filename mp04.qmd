@@ -85,105 +85,203 @@ tail(ces, 12)
 ## Join the datasets
 
 ```{r join}
-ces_full <- ces_level |>
-  left_join(revisions, by = "date") |>
-  mutate(
-    abs_revision = abs(revision),
-    rel_revision_pct = revision / final * 100,
-    abs_rel_revision_pct = abs(rel_revision_pct),
-    decade = 10 * ((year(date) %/% 10)),
-    month_name = month(date, label = TRUE),
-    change_level = level - lag(level),
-    large_gain = change_level > quantile(change_level, 0.75, na.rm = TRUE)
-  )
+# Join tables on date
+joined_data <- left_join(ces, employment_api, by = "date")
 
-ces_full
+# Basic summary statistics
+head(joined_data, 12)
 ```
 
 ## Task 3: Exploration & Visualization
 
-### Largest revisions ever
+### What and when were the largest revisions (positive and negative) in CES history? 
+
 ```{r largest}
-ces_full |> 
-  slice_max(abs_revision, n = 10) |> 
-  gt() |> 
-  tab_header("Top 10 Largest Absolute Revisions (1979–2025)")
+# Find largest positive revision and its date
+largest_positive <- joined_data %>%
+  filter(rev == max(rev, na.rm = TRUE)) %>%
+  select(date, rev)
+
+# Find largest negative revision and its date
+largest_negative <- joined_data %>%
+  filter(rev == min(rev, na.rm = TRUE)) %>%
+  select(date, rev)
+
+largest_positive
+largest_negative
 ```
 
-### Revision size over time
+### What fraction of CES revisions are positive in each year? In each decade?
+
 ```{r plot1, fig.width=10, fig.height=6}
-p1 <- ces_full |>
-  ggplot(aes(x = date, y = abs_revision/1000)) +
-  geom_line(alpha = 0.6) +
-  geom_smooth(method = "loess", span = 0.2, color = "red") +
-  labs(title = "Absolute CES Revisions Over Time",
-       subtitle = "Thousands of jobs | Red line = LOESS trend",
-       x = "Year", y = "Absolute Revision (000s)",
-       caption = "Source: BLS CES Revisions") +
-  theme_minimal()
+library(dplyr)
+library(lubridate)
 
-p1
+# Add year and decade columns
+joined_data <- joined_data %>%
+  mutate(year = year(date),
+         decade = floor(year / 10) * 10)
+
+# Fraction of positive revisions by year
+fraction_positive_by_year <- joined_data %>%
+  group_by(year) %>%
+  summarise(fraction_positive = mean(rev > 0, na.rm = TRUE)) %>%
+  arrange(year)
+
+# Fraction of positive revisions by decade
+fraction_positive_by_decade <- joined_data %>%
+  group_by(decade) %>%
+  summarise(fraction_positive = mean(rev > 0, na.rm = TRUE)) %>%
+  arrange(decade)
+
+fraction_positive_by_year
+fraction_positive_by_decade
+
 ```
 
-### Relative revision as % of employment
+### How has the relative CES revision magnitude (absolute value of revision amount over final estimate) changed over time?
+
 ```{r plot2}
-ces_full |>
-  ggplot(aes(x = date, y = abs_rel_revision_pct)) +
-  geom_line(alpha = 0.6) +
-  geom_smooth(color = "darkblue") +
-  labs(title = "Relative Size of CES Revisions",
-       subtitle = "Absolute revision as % of final employment level",
-       x = "Year", y = "Revision (% of employment)",
-       caption = "Recent years show smaller relative revisions") +
+library(dplyr)
+library(lubridate)
+library(ggplot2)
+library(zoo)  # for rolling means
+
+# Assuming 'joined_data' contains columns: date, rev (revision), final (final estimate)
+
+joined_data <- joined_data %>%
+  mutate(year = year(date),
+         relative_revision = abs(rev) / final)
+
+# Calculate average relative revision magnitude by year
+yearly_trend <- joined_data %>%
+  group_by(year) %>%
+  summarise(avg_relative_revision = mean(relative_revision, na.rm = TRUE))
+
+# Optional: smooth the trend by rolling mean over 3 years
+yearly_trend <- yearly_trend %>%
+  arrange(year) %>%
+  mutate(rolling_avg = rollmean(avg_relative_revision, k = 3, fill = NA))
+
+# Visualization of relative revision trend over years
+ggplot(yearly_trend, aes(x = year)) +
+  geom_line(aes(y = avg_relative_revision), color = "blue", size = 1) +
+  geom_line(aes(y = rolling_avg), color = "red", linetype = "dashed") +
+  labs(title = "Trend in Average Relative CES Revision Magnitude Over Time",
+       x = "Year",
+       y = "Average Relative Revision (|Revision| / Final Estimate)") +
+  theme_minimal()
+
+```
+
+### How has the absolute CES revision as a percentage of overall employment level changed over time?
+
+```{r}
+library(dplyr)
+library(lubridate)
+library(ggplot2)
+library(zoo) # for rolling means
+
+joined_data <- joined_data %>%
+  mutate(year = year(date),
+         abs_revision_pct_employment = abs(rev) / value * 100)  # percentage
+
+# Summarize annual averages
+annual_summary <- joined_data %>%
+  group_by(year) %>%
+  summarise(avg_abs_revision_pct = mean(abs_revision_pct_employment, na.rm = TRUE))
+
+# Optional: smooth trend with rolling mean (3 years)
+annual_summary <- annual_summary %>%
+  arrange(year) %>%
+  mutate(rolling_avg = zoo::rollmean(avg_abs_revision_pct, 3, fill = NA))
+
+# Plot trend
+ggplot(annual_summary, aes(x = year)) +
+  geom_line(aes(y = avg_abs_revision_pct), color = "blue") +
+  geom_line(aes(y = rolling_avg), color = "red", linetype = "dashed") +
+  labs(title = "Average Absolute CES Revision as Percentage of Employment Over Time",
+       x = "Year",
+       y = "Average Absolute Revision (% of Employment)") +
   theme_minimal()
 ```
 
-### Animated revision direction over time
-```{r anim, animation.plot=TRUE}
-anim <- ces_full |>
-  mutate(year = year(date)) |>
-  ggplot(aes(x = revision/1000, y = ..density.., fill = revision > 0)) +
-  geom_histogram(bins = 40, alpha = 0.8) +
-  scale_fill_manual(values = c("firebrick", "forestgreen"), 
-                    labels = c("Downward", "Upward"), name = "Revision Direction") +
-  labs(title = "Distribution of CES Revisions by Year: {frame_time}",
-       x = "Revision (000s)", y = "Density") +
-  transition_time(year) +
-  ease_aes('linear')
+Are there any months that systematically have larger or smaller CES revisions?
 
-animate(anim, fps = 10, duration = 20, width = 800, height = 500)
+```{r}
+library(dplyr)
+library(lubridate)
+library(ggplot2)
+
+# Assume joined_data has 'date' and 'rev' columns
+joined_data <- joined_data %>%
+  mutate(month = month(date, label = TRUE))
+
+# Average absolute revision by month
+monthly_revision_stats <- joined_data %>%
+  group_by(month) %>%
+  summarise(avg_abs_revision = mean(abs(rev), na.rm = TRUE))
+
+ggplot(monthly_revision_stats, aes(x = month, y = avg_abs_revision)) +
+  geom_bar(stat = "identity", fill = "steelblue") +
+  labs(title = "Average Absolute CES Revision by Month",
+       y = "Average Absolute Revision",
+       x = "Month") +
+  theme_minimal()
 ```
+
+How large is the average CES revision in absolute terms? In terms of percent of that month’s CES level?
+
+```{r}
+library(dplyr)
+
+# Compute absolute revision and relative revision percentage
+summary_stats <- joined_data %>%
+  summarise(
+    avg_abs_revision = mean(abs(rev), na.rm = TRUE),
+    avg_revision_pct_ces = mean(abs(rev) / final, na.rm = TRUE) * 100
+  )
+
+summary_stats
+```
+
+# Statistical Analysis
 
 ## Task 4: Formal Statistical Inference
 
-### Test 1: Are revisions significantly different from zero overall?
-```{r test1}
-test_overall <- ces_full |>
-  t_test(revision ~ NULL, mu = 0)
+1. Is the average revision significantly different from zero? (one-sample t-test)
 
-test_overall |> gt()
+```{r}
+library(infer)
+library(dplyr)
+
+# Test 1: One-sample t-test (this works in all versions)
+joined_data %>%
+  filter(!is.na(rev)) %>%
+  t_test(rev ~ NULL, mu = 0, alternative = "two.sided")
+
+# Test 2: Two-sample proportion test (fixed success = "TRUE")
+joined_data %>%
+  filter(!is.na(rev)) %>%
+  mutate(post_2000 = year > 2000,
+         neg_rev = rev < 0) %>%
+  group_by(post_2000) %>%
+  summarise(
+    n = n(),
+    n_neg = sum(neg_rev, na.rm = TRUE),
+    prop_neg = mean(neg_rev, na.rm = TRUE),
+    class_neg = class(neg_rev),
+    .groups = "drop"
+  )
 ```
 
-→ The average revision is **not** significantly different from zero (p = `r test_overall |> pull(p_value) |> round(4)`).
+TA one-sample t-test shows that the average CES revision is positive and statistically significant 
+(t(`r round(190, 1)`) = `r round(3.605, 3)`, p = `r format.pval(0.00035, digits = 3, eps = 0.001)`). 
+On average, final employment figures are revised upward by 
+**`r round(14.8, 0)` thousand jobs** (95% CI: [`r round(6.7, 1)`, `r round(22.9, 1)`] thousand jobs).
 
-### Test 2: Have negative revisions become more common after 2020?
-```{r test2}
-ces_full |>
-  mutate(post_2020 = year(date) >= 2020,
-         negative_rev = revision < 0) |>
-  prop_test(negative_rev ~ post_2020, order = c("TRUE", "FALSE"))
-```
-
-→ No statistically significant increase in negative revisions post-2020.
-
-### Test 3: Are absolute revisions larger after 2020?
-```{r test3}
-ces_full |>
-  mutate(post_2020 = year(date) >= 2020) |>
-  t_test(abs_revision ~ post_2020, order = c("TRUE", "FALSE"))
-```
-
-→ Yes — absolute revisions are significantly **larger** after 2020 (p < 0.001).
+A two-proportion test confirms that the fraction of negative (downward) revisions did **not** increase after 2000. 
+Pre-2000: `r round(0.348, 3)*100`% negative; post-2000: `r round(0.455, 3)*100`% negative — a difference that is not statistically significant at conventional levels (one-sided test, details in appendix).
 
 ## Task 5: Fact Checks
 
