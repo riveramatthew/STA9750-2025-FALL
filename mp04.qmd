@@ -1,14 +1,150 @@
 ---
 title: "Just the Fact(-Check)s, Ma’am! – Mini-Project #04"
-author: "Your Name"
-date: "2025-12-05"
-format: 
+author: "Matthew Rivera"
+date: "`r Sys.Date()`"
+format:
   html:
+    output-dir: docs
     toc: true
+    toc-depth: 2
     code-fold: true
-    theme: cosmo
+    code-summary: "Show code"
+    embed-resources: true
+    self-contained: true
 editor: visual
+execute:
+  cache: true
+  warning: false
+  message: false
 ---
+
+```{css}
+body {
+  font-family: "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  background-color: #ffffff;
+  color: #1c3c6a; /* BLS official dark blue */
+  line-height: 1.6;
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+}
+
+h1, h2, h3, h4 {
+  color: #003366; /* Navy blue BLS headings */
+  font-weight: 700;
+  margin-top: 2rem;
+  margin-bottom: 1rem;
+  letter-spacing: 0.02em;
+}
+
+h1 {
+  font-size: 2.4rem;
+  border-bottom: 4px solid #005a9c; /* medium blue underline */
+  padding-bottom: 0.4rem;
+}
+
+h2 {
+  font-size: 1.8rem;
+  border-bottom: 2px solid #cfe0f1; /* light blue underline */
+  padding-bottom: 0.3rem;
+}
+
+h3 {
+  font-size: 1.5rem;
+  color: #004080;
+}
+
+.visualization-container {
+  background-color: #f7f9fc; /* very light blue-gray */
+  border-radius: 8px;
+  padding: 1.8rem;
+  margin: 2rem 0;
+  border: 1px solid #dae2ed; /* subtle border */
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+
+.visualization-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+  gap: 1.5rem;
+  margin: 2rem 0;
+}
+
+.fact-check {
+  background: linear-gradient(135deg, #e9f1fc, #c8dafd);
+  border-left: 7px solid #0071bc; /* BLS blue */
+  padding: 1.2rem 1.6rem;
+  border-radius: 0 8px 8px 0;
+  margin: 2rem 0;
+  font-size: 1rem;
+  color: #003366;
+}
+
+.fact-check strong {
+  color: #005a9c;
+}
+
+.trend-positive {
+  color: #2e7d32; /* green, easy on eyes */
+  font-weight: 700;
+}
+
+.trend-negative {
+  color: #c62828; /* muted red */
+  font-weight: 700;
+}
+
+table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 1.5rem 0;
+  font-size: 1rem;
+}
+
+th {
+  background-color: #005a9c;
+  color: white;
+  padding: 0.9rem 1rem;
+  text-align: left;
+  border-bottom: 3px solid #003366;
+}
+
+td {
+  padding: 0.7rem 1rem;
+  border-bottom: 1px solid #dae2ed;
+}
+
+tr:nth-child(even) { background-color: #f3f6fb; }
+tr:hover { background-color: #dbe9ff; }
+
+.plot-caption {
+  font-size: 0.9rem;
+  color: #6b7c93;
+  font-style: italic;
+  text-align: center;
+  margin-top: 0.5rem;
+}
+
+img, .plotly, figure {
+  max-width: 100%;
+  height: auto;
+  border-radius: 6px;
+  box-shadow: 0 1px 6px rgba(0,0,0,0.08);
+}
+
+pre, code {
+  border-radius: 6px;
+  font-size: 0.93rem;
+  background-color: #f0f4f8;
+  padding: 0.2rem 0.4rem;
+}
+
+/* Quarto callouts */
+.callout-note { border-left-color: #0071bc; }
+.callout-important { border-left-color: #d9534f; }
+.callout-tip { border-left-color: #5bc0de; }
+
+```
 
 ```{r setup, include=FALSE}
 #| include: false
@@ -30,6 +166,7 @@ library(gt)
 library(httr2)
 library(rvest)
 library(infer)
+library(dplyr)
 library(scales)
 library(lubridate)
 library(gganimate)
@@ -40,27 +177,89 @@ readRenviron("~/.Renviron")
 ## Task 1: Final CES Total Nonfarm Payroll (1979–2025)
 
 ```{r task1}
-library(blscrapeR)
-library(tidyverse)
+library(httr2)
 library(rvest)
+library(dplyr)
+library(stringr)
+library(readr)
+library(purrr)  # for map()
 
-# APPROACH 1: Using blscrapeR API (recommended - cleaner, more reliable)
-employment_api <- bls_api(
-  seriesid = "CES0000000001",
-  startyear = 1979,
-  endyear = as.numeric(format(Sys.Date(), "%Y")) + 1,
-  api_key = '68f7dece95b549ffb1c735229d4703b4'
-) %>%
-  as_tibble() %>%
+# 1. Get the full table (BLS gives 1939–2025, we'll filter later)
+resp <- request("https://data.bls.gov/pdq/SurveyOutputServlet") |>
+  req_method("POST") |>
+  req_headers(
+    `Content-Type` = "application/x-www-form-urlencoded",
+    `User-Agent`   = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+    `Accept`       = "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+    `Referer`      = "https://data.bls.gov/pdq/SurveyOutputServlet"
+  ) |>
+  req_body_form(
+    survey               = "ce",
+    series_id            = "CES0000000001",
+    from_results_page    = "Y",
+    output_view          = "data",
+    request_action       = "get_data",
+    years_option         = "all_years",
+    delimiter            = "tab",
+    output_format        = "html",
+    table_format         = "formatted",
+    original_output_type = "default",
+    catalog              = "true",
+    include_graphs       = "false",
+    to_xml               = "false",
+    annual_averages      = "false"
+  ) |>
+  req_perform()
+
+html_page  <- resp |> resp_body_html()
+table_node <- html_page |> html_element("table.regular-data")
+
+# 2. Extract headers and rows cleanly
+headers <- table_node |>
+  html_node("thead") |>
+  html_nodes("th") |>
+  html_text(trim = TRUE) |>
+  str_remove("\\s*\\(P\\)\\s*") |>
+  str_trim()
+
+rows <- table_node |>
+  html_node("tbody") |>
+  html_nodes("tr")
+
+data_list <- map(rows, ~ {
+  cells  <- .x |> html_nodes("td, th") |> html_text(trim = TRUE)
+  values <- str_remove_all(cells, "[^0-9.-]")
+  set_names(as.list(values), headers)
+})
+
+df_raw <- bind_rows(data_list) |> as_tibble()
+
+# 3. Final dataset: Jan 1979 → latest, newest first
+final_data <- df_raw |>
+  mutate(Year = as.integer(Year)) |>
+  tidyr::pivot_longer(
+    cols = Jan:Dec,
+    names_to = "Month_Abbr",
+    values_to = "level"
+  ) |>
   mutate(
-    month = as.numeric(str_extract(period, "\\d+")),  # Extract month number from "M12"
-    date = make_date(year, month, 1),
-    value = as.numeric(value)
-  ) %>%
-  select(date, value) %>%
-  arrange(date)
+    level = as.numeric(level),
+    Month = match(Month_Abbr, month.abb),           # Jan=1, Feb=2, etc.
+    date  = as.Date(paste(Year, Month, "01", sep = "-"))
+  ) |>
+  filter(!is.na(level), !is.na(date)) |>
+  filter(date >= as.Date("1979-01-01")) |>          # <<< THIS LINE KEEPS ONLY 1979+
+  select(date, level) |>
+  arrange(desc(date))                               # newest on top
 
-head(employment_api)
+cat("Success! Scraped", nrow(final_data), "monthly observations (Jan 1979 – latest)\n")
+
+print(head(final_data, 8))   # latest 8 months
+print(tail(final_data, 6))   # first 6 months of 1979 (to prove it's there)
+
+write_csv(final_data, "CES0000000001_1979_to_present_date_level.csv")
+cat("\nFile saved: CES0000000001_1979_to_present_date_level.csv\n")
+cat("First date:", min(final_data$date), " | Last date:", max(final_data$date), "\n")
 ```
 
 ## Task 2: CES Revisions (1979–2025)
@@ -85,8 +284,9 @@ tail(ces, 12)
 ## Join the datasets
 
 ```{r join}
+library(dplyr)
 # Join tables on date
-joined_data <- left_join(ces, employment_api, by = "date")
+joined_data <- left_join(ces, final_data, by = "date")
 
 # Basic summary statistics
 head(joined_data, 12)
@@ -94,7 +294,7 @@ head(joined_data, 12)
 
 ## Task 3: Exploration & Visualization
 
-### What and when were the largest revisions (positive and negative) in CES history? 
+### What and when were the largest revisions (positive and negative) in CES history?
 
 ```{r largest}
 # Find largest positive revision and its date
@@ -206,7 +406,7 @@ ggplot(annual_summary, aes(x = year)) +
   theme_minimal()
 ```
 
-Are there any months that systematically have larger or smaller CES revisions?
+### Are there any months that systematically have larger or smaller CES revisions?
 
 ```{r}
 library(dplyr)
@@ -230,7 +430,7 @@ ggplot(monthly_revision_stats, aes(x = month, y = avg_abs_revision)) +
   theme_minimal()
 ```
 
-How large is the average CES revision in absolute terms? In terms of percent of that month’s CES level?
+### How large is the average CES revision in absolute terms? In terms of percent of that month’s CES level?
 
 ```{r}
 library(dplyr)
@@ -245,11 +445,9 @@ summary_stats <- joined_data %>%
 summary_stats
 ```
 
-# Statistical Analysis
-
 ## Task 4: Formal Statistical Inference
 
-1. Is the average revision significantly different from zero? (one-sample t-test)
+1.  Is the average revision significantly different from zero? (one-sample t-test)
 
 ```{r}
 library(infer)
@@ -275,41 +473,171 @@ joined_data %>%
   )
 ```
 
-TA one-sample t-test shows that the average CES revision is positive and statistically significant 
-(t(`r round(190, 1)`) = `r round(3.605, 3)`, p = `r format.pval(0.00035, digits = 3, eps = 0.001)`). 
-On average, final employment figures are revised upward by 
-**`r round(14.8, 0)` thousand jobs** (95% CI: [`r round(6.7, 1)`, `r round(22.9, 1)`] thousand jobs).
+TA one-sample t-test shows that the average CES revision is positive and statistically significant (t(`r round(190, 1)`) = `r round(3.605, 3)`, p = `r format.pval(0.00035, digits = 3, eps = 0.001)`). On average, final employment figures are revised upward by **`r round(14.8, 0)` thousand jobs** (95% CI: \[`r round(6.7, 1)`, `r round(22.9, 1)`\] thousand jobs).
 
-A two-proportion test confirms that the fraction of negative (downward) revisions did **not** increase after 2000. 
-Pre-2000: `r round(0.348, 3)*100`% negative; post-2000: `r round(0.455, 3)*100`% negative — a difference that is not statistically significant at conventional levels (one-sided test, details in appendix).
+A two-proportion test confirms that the fraction of negative (downward) revisions did **not** increase after 2000. Pre-2000: `r round(0.348, 3)*100`% negative; post-2000: `r round(0.455, 3)*100`% negative — a difference that is not statistically significant at conventional levels (one-sided test, details in appendix).
 
 ## Task 5: Fact Checks
 
+```{r}
+library(dplyr)
+library(scales)
+library(lubridate)
+
+# Largest single revision ever (thousands of jobs) and date
+largest_revision <- joined_data %>%
+  dplyr::slice_max(order_by = abs(rev), n = 1)
+
+largest_revision_value <- largest_revision %>%
+  dplyr::pull(rev) / 1000 %>%
+  round(0)
+
+largest_revision_date <- largest_revision %>%
+  dplyr::pull(date) %>%
+  format("%b %Y")
+
+# Average absolute revision 2020-2025
+avg_abs_rev_2020_25 <- joined_data %>%
+  filter(year(date) >= 2020) %>%
+  summarise(mean_abs_rev = mean(abs(rev), na.rm = TRUE) / 1000) %>%
+  dplyr::pull() %>%
+  round(1)
+
+# Average absolute revision 1979-2019
+avg_abs_rev_1979_2019 <- joined_data %>%
+  filter(year(date) < 2020) %>%
+  summarise(mean_abs_rev = mean(abs(rev), na.rm = TRUE) / 1000) %>%
+  dplyr::pull() %>%
+  round(1)
+
+# Fraction of downward revisions 2021-2024
+frac_down_2021_24 <- joined_data %>%
+  filter(between(year(date), 2021, 2024)) %>%
+  summarise(frac_down = mean(rev < 0, na.rm = TRUE)) %>%
+  dplyr::pull()
+
+frac_down_2021_24_pct <- scales::percent(frac_down_2021_24, accuracy = 0.1)
+
+# Historical average fraction downward <= 2020
+frac_down_hist <- joined_data %>%
+  filter(year(date) <= 2020) %>%
+  summarise(frac_down = mean(rev < 0, na.rm = TRUE)) %>%
+  dplyr::pull()
+
+frac_down_hist_pct <- scales::percent(frac_down_hist, accuracy = 0.1)
+
+list(
+  largest_revision_value = largest_revision_value,
+  largest_revision_date = largest_revision_date,
+  avg_abs_rev_2020_25 = avg_abs_rev_2020_25,
+  avg_abs_rev_1979_2019 = avg_abs_rev_1979_2019,
+  frac_down_2021_24_pct = frac_down_2021_24_pct,
+  frac_down_hist_pct = frac_down_hist_pct
+)
+```
+
 ### Claim 1 – Elon Musk (August 2025)
+
 > “The BLS has been consistently and massively underreporting job growth for years — the revisions are the biggest in history and prove the numbers were fake.” – Elon Musk, X post, Aug 3, 2025
 
 **Fact Check: Mostly False**
 
-- Largest single revision ever: `r joined_data |> slice_max(order_by = abs(rev), n = 1) |> pull(rev) / 1000 |> round(0)` thousand jobs (`r joined_data |> slice_max(order_by = abs(rev), n = 1) |> pull(date) |> format("%b %Y")`, pandemic shock)
-- Average absolute revision (2020–2025): `r joined_data |> filter(year(date) >= 2020) |> summarise(mean(abs(rev)) / 1000) |> pull() |> round(1)` thousand
-- Average absolute revision (1979–2019): `r joined_data |> filter(year(date) < 2020) |> summarise(mean(abs(rev)) / 1000) |> pull() |> round(1)` thousand
-- Relative revision as % of employment is **smaller** today than in the 1980s–1990s (see plot above)
+-   Largest single revision ever: `r largest_revision_value` thousand jobs (`r largest_revision_date`, pandemic shock)
+-   Average absolute revision (2020–2025): `r avg_abs_rev_2020_25` thousand
+-   Average absolute revision (1979–2019): `r avg_abs_rev_1979_2019` thousand
+-   Relative revision as % of employment is **smaller** today than in the 1980s–1990s (see plot above)
 
 While some recent absolute revisions are large in raw numbers, they are **not** unusually large relative to the size of the labor force. The claim ignores population growth.
 
 **Politifact Rating: Mostly False**
 
 ### Claim 2 – Rep. Marjorie Taylor Greene (August 2025)
+
 > “Under Biden the jobs numbers were revised downward 100% of the time — proof of manipulation.”
 
 **Fact Check: Pants on Fire**
 
-- Fraction of downward revisions 2021–2024: `r joined_data |> filter(between(year(date), 2021, 2024)) |> summarise(mean(rev < 0, na.rm = TRUE)) |> pull() |> scales::percent(accuracy = 0.1)`
-- Historical average (1979–2020): `r joined_data |> filter(year(date) <= 2020) |> summarise(mean(rev < 0, na.rm = TRUE)) |> pull() |> scales::percent(accuracy = 0.1)`
+-   Fraction of downward revisions 2021–2024: `r frac_down_2021_24_pct`
+-   Historical average (1979–2020): `r frac_down_hist_pct`
 
 Downward revisions were more common under Biden than average, but far from 100%. Many months had upward revisions.
 
 **Politifact Rating: Pants on Fire**
+
+## Extra Credit
+
+Give a short nontechnical paragraph explaining computationally intensive inference
+
+Computationally intensive statistical inference is a way of using computer simulations to understand the reliability of data results without relying on strict mathematical formulas. Instead, these methods repeatedly resample or rearrange the existing data to create many “what-if” versions, which help estimate how a statistic might vary if the study were repeated many times. This approach is especially helpful when data are complex or do not meet traditional assumptions, providing a flexible and often more accurate way to assess uncertainty and test hypotheses. It allows researchers to “let the computer do the heavy lifting” to discover patterns and make sound conclusions based on the data itself.
+
+Design a simple flowchart showing bootstrap vs permutation steps
+
+```{mermaid}
+flowchart TD
+    A["Start with observed data"] --> B{"Choose approach"}
+
+    B --> C["Bootstrap approach"]
+    B --> D["Permutation approach"]
+
+    C --> E["Sample with replacement\nmany times\n(resampling)"]
+    D --> F["Shuffle group/label assignments\nmany times\n(reshuffling)"]
+
+    E --> G["Calculate statistic on\neach resampled dataset"]
+    F --> H["Calculate statistic on\neach reshuffled dataset"]
+
+    G --> I["Build bootstrap\ndistribution"]
+    H --> J["Build permutation\ndistribution"]
+
+    I --> K["Use distribution to estimate\nconfidence intervals"]
+    J --> L["Use distribution to test\nnull hypothesis p-values"]
+
+    K --> M["Draw conclusions about\nparameter uncertainty"]
+    L --> N["Draw conclusions about\nsignificance of observed effect"]
+
+    style A fill:#e1f5fe
+    style M fill:#f1f8e9
+    style N fill:#f1f8e9
+```
+
+-   Bootstrap samples create plausible alternative datasets by resampling with replacement from the original data. It estimates the variability of a statistic.
+
+-   Permutation tests create datasets by randomly shuffling labels without replacement to simulate what data would look like under no effect (null hypothesis).
+
+-   Both use many repeated computations to build empirical distributions of the statistic, avoiding reliance on strict parametric assumptions.
+
+-   They differ mainly in their goals: bootstrapping quantifies uncertainty; permutation testing performs hypothesis tests.
+
+```{r}
+library(infer)
+
+# Set seed for reproducibility
+set.seed(123)
+
+# Observed mean revision
+observed_mean <- mean(joined_data$rev, na.rm = TRUE)
+
+# Bootstrap distribution of mean revisions (5000 replicates)
+bootstrap_dist <- joined_data %>%
+  specify(response = rev) %>%
+  hypothesize(null = "point", mu = 0) %>%
+  generate(reps = 5000, type = "bootstrap") %>%
+  calculate(stat = "mean")
+
+# Bootstrap 95% confidence interval
+bootstrap_ci <- bootstrap_dist %>%
+  get_confidence_interval(type = "percentile", level = 0.95)
+
+# Print results
+print(paste("Observed mean revision:", round(observed_mean, 2)))
+print(bootstrap_ci)
+
+```
+
+The observed mean revision of 14.79 thousand jobs is the average change in employment revision over the sample period. The bootstrap confidence interval (CI) you obtained ranges from approximately -8.44 to 7.88 thousand jobs.
+
+## Interpretation:
+
+A 95% bootstrap confidence interval means we are 95% confident the true average revision lies within that range. Your interval includes zero (from about -8.44 to 7.88), so the bootstrap alone does not show strong evidence the mean differs from zero. This contrasts with the parametric t-test which found a significant positive mean. Highlighting both results offers a balanced view and strengthens your fact check’s credibility.
 
 ## Conclusion
 
