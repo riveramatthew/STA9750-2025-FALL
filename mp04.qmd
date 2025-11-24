@@ -152,114 +152,39 @@ if(!dir.exists(file.path("data", "mp04"))){
     dir.create(file.path("data", "mp02"), showWarnings=FALSE, recursive=TRUE)
 }
 
-library <- function(pkg){
-    ## Mask base::library() to automatically install packages if needed
-    ## Masking is important here so downlit picks up packages and links
-    ## to documentation
-    pkg <- as.character(substitute(pkg))
-    options(repos = c(CRAN = "https://cloud.r-project.org"))
-    if(!require(pkg, character.only=TRUE, quietly=TRUE)) install.packages(pkg)
-    stopifnot(require(pkg, character.only=TRUE, quietly=TRUE))
-}
-
-library(gt)
-library(httr2)
-library(rvest)
-library(infer)
-library(dplyr)
-library(scales)
-library(lubridate)
-library(gganimate)
-library(tidyverse)
+library(gt); library(readr); library(httr2); library(rvest); library(infer); library(dplyr); library(purrr); library(scales); library(lubridate); library(gganimate); library(tidyverse)
 readRenviron("~/.Renviron")
+cache_path <- "data/mp04-cache"
+if (!dir.exists(cache_path)) dir.create(cache_path, recursive = TRUE)
 ```
 
 ## Task 1: Final CES Total Nonfarm Payroll (1979–2025)
 
 ```{r task1}
-library(httr2)
-library(rvest)
-library(dplyr)
-library(stringr)
-library(readr)
-library(purrr)  # for map()
-
-# 1. Get the full table (BLS gives 1939–2025, we'll filter later)
-resp <- request("https://data.bls.gov/pdq/SurveyOutputServlet") |>
+final_ces <- request("https://data.bls.gov/pdq/SurveyOutputServlet") |>
   req_method("POST") |>
-  req_headers(
-    `Content-Type` = "application/x-www-form-urlencoded",
-    `User-Agent`   = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
-    `Accept`       = "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-    `Referer`      = "https://data.bls.gov/pdq/SurveyOutputServlet"
+  req_headers(`Content-Type` = "application/x-www-form-urlencoded",
+    `User-Agent` = "R httr2 (educational use – STA9750 Baruch College)"
   ) |>
   req_body_form(
-    survey               = "ce",
-    series_id            = "CES0000000001",
-    from_results_page    = "Y",
-    output_view          = "data",
-    request_action       = "get_data",
-    years_option         = "all_years",
-    delimiter            = "tab",
-    output_format        = "html",
-    table_format         = "formatted",
-    original_output_type = "default",
-    catalog              = "true",
-    include_graphs       = "false",
-    to_xml               = "false",
-    annual_averages      = "false"
+    survey = "ce", series_id = "CES0000000001", years_option = "all_years", output_view =
+    "data", delimiter = "tab", output_format = "html", annual_averages = "false"
   ) |>
-  req_perform()
-
-html_page  <- resp |> resp_body_html()
-table_node <- html_page |> html_element("table.regular-data")
-
-# 2. Extract headers and rows cleanly
-headers <- table_node |>
-  html_node("thead") |>
-  html_nodes("th") |>
-  html_text(trim = TRUE) |>
-  str_remove("\\s*\\(P\\)\\s*") |>
-  str_trim()
-
-rows <- table_node |>
-  html_node("tbody") |>
-  html_nodes("tr")
-
-data_list <- map(rows, ~ {
-  cells  <- .x |> html_nodes("td, th") |> html_text(trim = TRUE)
-  values <- str_remove_all(cells, "[^0-9.-]")
-  set_names(as.list(values), headers)
-})
-
-df_raw <- bind_rows(data_list) |> as_tibble()
-
-# 3. Final dataset: Jan 1979 → latest, newest first
-final_data <- df_raw |>
-  mutate(Year = as.integer(Year)) |>
-  tidyr::pivot_longer(
-    cols = Jan:Dec,
-    names_to = "Month_Abbr",
-    values_to = "level"
+  req_cache(path = cache_path, use_on_error = TRUE) |>  # never re-download unless page changes
+  req_perform() |>
+  resp_body_html() |>
+  html_element("table.regular-data") |>
+  html_table() |>
+  set_names(c("Year", month.abb)) |>
+  pivot_longer(cols = -Year, names_to = "Month", values_to = "level_raw") |>
+  mutate(date  = ym(paste(Year, Month)),
+  level = as.numeric(str_remove_all(level_raw, "[^0-9.-]")) / 1000   # thousands of jobs
   ) |>
-  mutate(
-    level = as.numeric(level),
-    Month = match(Month_Abbr, month.abb),           # Jan=1, Feb=2, etc.
-    date  = as.Date(paste(Year, Month, "01", sep = "-"))
-  ) |>
-  filter(!is.na(level), !is.na(date)) |>
-  filter(date >= as.Date("1979-01-01")) |>          # <<< THIS LINE KEEPS ONLY 1979+
+  filter(year(date) >= 1979) |>
   select(date, level) |>
-  arrange(desc(date))                               # newest on top
+  arrange(date)
 
-cat("Success! Scraped", nrow(final_data), "monthly observations (Jan 1979 – latest)\n")
-
-print(head(final_data, 8))   # latest 8 months
-print(tail(final_data, 6))   # first 6 months of 1979 (to prove it's there)
-
-write_csv(final_data, "CES0000000001_1979_to_present_date_level.csv")
-cat("\nFile saved: CES0000000001_1979_to_present_date_level.csv\n")
-cat("First date:", min(final_data$date), " | Last date:", max(final_data$date), "\n")
+final_ces |> slice_tail(n = 12)
 ```
 
 ## Task 2: CES Revisions (1979–2025)
@@ -286,7 +211,7 @@ tail(ces, 12)
 ```{r join}
 library(dplyr)
 # Join tables on date
-joined_data <- left_join(ces, final_data, by = "date")
+joined_data <- left_join(ces, final_ces, by = "date")
 
 # Basic summary statistics
 head(joined_data, 12)
@@ -342,13 +267,10 @@ fraction_positive_by_decade
 ### How has the relative CES revision magnitude (absolute value of revision amount over final estimate) changed over time?
 
 ```{r plot2}
-library(dplyr)
-library(lubridate)
 library(ggplot2)
 library(zoo)  # for rolling means
 
 # Assuming 'joined_data' contains columns: date, rev (revision), final (final estimate)
-
 joined_data <- joined_data %>%
   mutate(year = year(date),
          relative_revision = abs(rev) / final)
@@ -380,39 +302,53 @@ ggplot(yearly_trend, aes(x = year)) +
 library(dplyr)
 library(lubridate)
 library(ggplot2)
-library(zoo) # for rolling means
+library(zoo)      # for rollmean()
+library(scales)   # nice axis labels (optional but recommended)
 
-joined_data <- joined_data %>%
-  mutate(year = year(date),
-         abs_revision_pct_employment = abs(rev) / value * 100)  # percentage
-
-# Summarize annual averages
+# 1. Annual average
 annual_summary <- joined_data %>%
+  mutate(year = year(date)) %>%
   group_by(year) %>%
-  summarise(avg_abs_revision_pct = mean(abs_revision_pct_employment, na.rm = TRUE))
-
-# Optional: smooth trend with rolling mean (3 years)
-annual_summary <- annual_summary %>%
+  summarise(avg_abs_revision_pct = mean(abs_revision_pct_employment, na.rm = TRUE),
+            .groups = "drop") %>%
   arrange(year) %>%
-  mutate(rolling_avg = zoo::rollmean(avg_abs_revision_pct, 3, fill = NA))
+  # 2. Add the 3-year rolling average (this was missing!)
+  mutate(rolling_avg = rollmean(avg_abs_revision_pct, 
+                                k = 3, 
+                                fill = NA, 
+                                align = "center"))
 
-# Plot trend
+# 3. Plot – now both columns exist!
 ggplot(annual_summary, aes(x = year)) +
-  geom_line(aes(y = avg_abs_revision_pct), color = "blue") +
-  geom_line(aes(y = rolling_avg), color = "red", linetype = "dashed") +
-  labs(title = "Average Absolute CES Revision as Percentage of Employment Over Time",
-       x = "Year",
-       y = "Average Absolute Revision (% of Employment)") +
-  theme_minimal()
+  geom_line(aes(y = avg_abs_revision_pct), 
+            color = "steelblue", size = 1.1) +
+  geom_point(aes(y = avg_abs_revision_pct), 
+             color = "steelblue", size = 1.8) +
+  geom_line(aes(y = rolling_avg), 
+            color = "red", linetype = "dashed", size = 1.2) +
+  
+  scale_x_continuous(breaks = pretty_breaks(n = 12)) +
+  scale_y_continuous(labels = percent_format(scale = 1)) +
+  
+  labs(
+    title = "Average Absolute CES Revision as Percentage of Employment",
+    subtitle = "Annual average with 3-year rolling mean",
+    x = "Year",
+    y = "Average |Revision| / Final Employment (%)",
+    caption = "Red dashed line = 3-year centered rolling average"
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(
+    plot.title = element_text(face = "bold", size = 14),
+    plot.subtitle = element_text(color = "grey50"),
+    plot.caption = element_text(color = "grey60"),
+    panel.grid.minor = element_blank()
+  )
 ```
 
 ### Are there any months that systematically have larger or smaller CES revisions?
 
 ```{r}
-library(dplyr)
-library(lubridate)
-library(ggplot2)
-
 # Assume joined_data has 'date' and 'rev' columns
 joined_data <- joined_data %>%
   mutate(month = month(date, label = TRUE))
