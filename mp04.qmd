@@ -1,5 +1,5 @@
 ---
-title: "Just the Fact(-Check)s, Ma’am! – Mini-Project #04"
+title: "Just the Fact(-Check)s, Ma'am! – Mini-Project #04"
 author: "Matthew Rivera"
 date: "`r Sys.Date()`"
 format:
@@ -18,147 +18,156 @@ execute:
 
 ```{css}
 body {
-  font-family: "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
   background-color: #ffffff;
-  color: #1c3c6a; /* BLS official dark blue */
-  line-height: 1.6;
+  color: #333333;
+  line-height: 1.65;
   max-width: 960px;
   margin: 0 auto;
   padding: 2rem 1rem;
+  font-size: 1.05rem;
 }
-
 h1, h2, h3, h4 {
-  color: #003366; /* Navy blue BLS headings */
+  color: #222222;
   font-weight: 700;
-  margin-top: 2rem;
-  margin-bottom: 1rem;
-  letter-spacing: 0.02em;
+  margin-top: 2.2rem;
+  margin-bottom: 0.9rem;
+  letter-spacing: -0.01em;
 }
-
 h1 {
-  font-size: 2.4rem;
-  border-bottom: 4px solid #005a9c; /* medium blue underline */
-  padding-bottom: 0.4rem;
+  font-size: 2.6rem;
+  border-bottom: 5px solid #c02d28; /* PolitiFact red underline */
+  padding-bottom: 0.5rem;
 }
-
 h2 {
-  font-size: 1.8rem;
-  border-bottom: 2px solid #cfe0f1; /* light blue underline */
-  padding-bottom: 0.3rem;
+  font-size: 1.9rem;
+  border-bottom: 2px solid #e5e5e5;
+  padding-bottom: 0.4rem;
+  color: #c02d28; /* Red h2 like PolitiFact article subheads */
 }
-
 h3 {
-  font-size: 1.5rem;
-  color: #004080;
+  font-size: 1.55rem;
+  color: #333;
 }
-
-.visualization-container {
-  background-color: #f7f9fc; /* very light blue-gray */
+/* Main fact-check / Truth-O-Meter style rating box */
+.fact-check {
+  background: #c02d28; /* PolitiFact red */
+  color: #ffffff;
+  padding: 1.4rem 1.8rem;
   border-radius: 8px;
+  margin: 2.5rem 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+  text-align: center;
+  box-shadow: 0 4px 12px rgba(192, 45, 40, 0.25);
+  border: none;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.fact-check strong {
+  color: #ffffff;
+}
+/* Alternate rating styles (True, Mostly True, False, Pants on Fire, etc.) */
+.rating-true { background: #5ba85a; } /* Green */
+.rating-mostly-true { background: #8dc63f; }
+.rating-half-true { background: #f9b735; }
+.rating-mostly-false { background: #f7931e; }
+.rating-false { background: #ed1c24; }
+.rating-pants-fire { background: #c02d28; border: 4px solid #000; }
+/* Supporting evidence / analysis block – light gray like PolitiFact's sourced sections */
+.visualization-container {
+  background-color: #f8f8f8;
+  border: 1px solid #dddddd;
+  border-left: 6px solid #c02d28;
+  border-radius: 6px;
   padding: 1.8rem;
   margin: 2rem 0;
-  border: 1px solid #dae2ed; /* subtle border */
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
 }
-
 .visualization-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
-  gap: 1.5rem;
+  gap: 1.8rem;
   margin: 2rem 0;
 }
-
-.fact-check {
-  background: linear-gradient(135deg, #e9f1fc, #c8dafd);
-  border-left: 7px solid #0071bc; /* BLS blue */
-  padding: 1.2rem 1.6rem;
-  border-radius: 0 8px 8px 0;
-  margin: 2rem 0;
-  font-size: 1rem;
-  color: #003366;
-}
-
-.fact-check strong {
-  color: #005a9c;
-}
-
-.trend-positive {
-  color: #2e7d32; /* green, easy on eyes */
-  font-weight: 700;
-}
-
-.trend-negative {
-  color: #c62828; /* muted red */
-  font-weight: 700;
-}
-
+/* Tables – PolitiFact uses simple clean tables */
 table {
   border-collapse: collapse;
   width: 100%;
-  margin: 1.5rem 0;
-  font-size: 1rem;
+  margin: 1.8rem 0;
+  font-size: 0.98rem;
 }
-
 th {
-  background-color: #005a9c;
+  background-color: #c02d28;
   color: white;
   padding: 0.9rem 1rem;
   text-align: left;
-  border-bottom: 3px solid #003366;
+  font-weight: 600;
 }
-
 td {
-  padding: 0.7rem 1rem;
-  border-bottom: 1px solid #dae2ed;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid #e0e0e0;
 }
-
-tr:nth-child(even) { background-color: #f3f6fb; }
-tr:hover { background-color: #dbe9ff; }
-
-.plot-caption {
-  font-size: 0.9rem;
-  color: #6b7c93;
-  font-style: italic;
-  text-align: center;
-  margin-top: 0.5rem;
-}
-
+tr:nth-child(even) { background-color: #f5f5f5; }
+tr:hover { background-color: #fff0f0; }
+/* Images and plots */
 img, .plotly, figure {
   max-width: 100%;
   height: auto;
   border-radius: 6px;
-  box-shadow: 0 1px 6px rgba(0,0,0,0.08);
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  margin: 1.5rem 0;
 }
-
+.plot-caption {
+  font-size: 0.9rem;
+  color: #666666;
+  font-style: italic;
+  text-align: center;
+  margin-top: 0.6rem;
+}
+/* Code blocks */
 pre, code {
-  border-radius: 6px;
-  font-size: 0.93rem;
-  background-color: #f0f4f8;
-  padding: 0.2rem 0.4rem;
+  font-family: Menlo, Monaco, Consolas, "Courier New", monospace;
+  background-color: #f4f4f4;
+  border-radius: 5px;
+  font-size: 0.92rem;
 }
-
-/* Quarto callouts */
-.callout-note { border-left-color: #0071bc; }
-.callout-important { border-left-color: #d9534f; }
-.callout-tip { border-left-color: #5bc0de; }
-
+pre { padding: 1rem; border: 1px solid #ddd; }
+/* Callouts – adapted to PolitiFact-style colored left borders */
+.callout-note { border-left-color: #c02d28; background-color: #fff4f4; }
+.callout-important{ border-left-color: #c02d28; background-color: #ffecec; }
+.callout-tip { border-left-color: #5ba85a; background-color: #f0f8f0; }
+/* Trend arrows keep some color but toned down */
+.trend-positive { color: #2e7d32; font-weight: 700; }
+.trend-negative { color: #c62828; font-weight: 700; }
 ```
 
 ```{r setup, include=FALSE}
-#| include: false
+# Create necessary directories for caching and data storage
 if(!dir.exists(file.path("data", "mp04"))){
-    dir.create(file.path("data", "mp02"), showWarnings=FALSE, recursive=TRUE)
+    dir.create(file.path("data", "mp04"), showWarnings=FALSE, recursive=TRUE)
 }
 
-library(gt); library(readr); library(httr2); library(rvest); library(infer); library(dplyr); library(purrr); library(scales); library(lubridate); library(gganimate); library(tidyverse)
+# Load all required libraries for web scraping, data manipulation, 
+# statistical inference, visualization, and animation
+library(gt); library(readr); library(httr2); library(rvest); library(infer);
+library(dplyr); library(purrr); library(scales); library(lubridate); library(gganimate); library(plotly); library(tidyverse)
 
+# Set up caching directory to avoid redundant web requests and enable offline rendering
 cache_path <- "data/mp04-cache"
 if (!dir.exists(cache_path)) dir.create(cache_path, recursive = TRUE)
 ```
 
+**Setup & Packages**
+
+Loads required R packages and creates necessary folders and a local cache directory so that all web requests are saved and the document can be re-rendered offline or much faster on subsequent runs.
+
 ## Task 1: Final CES Total Nonfarm Payroll (1979–2025)
 
 ```{r task1}
+# Scrape official final (fully revised) monthly nonfarm payroll employment levels from BLS.
+# Uses httr2 POST request with caching to avoid repeated downloads.
+# Returns an HTML table that is parsed, cleaned, and converted to tidy format with proper dates.
 final_ces <- request("https://data.bls.gov/pdq/SurveyOutputServlet") |>
   req_method("POST") |>
   req_headers(`Content-Type` = "application/x-www-form-urlencoded",
@@ -175,46 +184,83 @@ final_ces <- request("https://data.bls.gov/pdq/SurveyOutputServlet") |>
   html_table() |>
   set_names(c("Year", month.abb)) |>
   pivot_longer(cols = -Year, names_to = "Month", values_to = "level_raw") |>
-  mutate(date  = ym(paste(Year, Month)),
-         # Removed the "/ 1000" at the end
-         level = as.numeric(str_remove_all(level_raw, "[^0-9-]")) 
+  mutate(date = ym(paste(Year, Month)),
+         # Convert employment levels to numeric, removing commas and other formatting
+         level = as.numeric(str_remove_all(level_raw, "[^0-9-]"))
   ) |>
   filter(year(date) >= 1979) |>
   select(date, level) |>
   arrange(date)
 
-final_ces |> slice_tail(n = 12)
+final_ces |> slice_head(n = 10)
 ```
+
+**Scrape the official final (fully revised) monthly nonfarm payroll employment levels** from the BLS public data query tool. The data are returned as an HTML table, parsed, cleaned, converted to proper dates, and filtered to start in January 1979. This gives us the "true" employment level for each month after all revisions are complete.
 
 ## Task 2: Historical Preliminary-to-Final Revisions (1979–Present)
 
 This scrapes the BLS page that shows **first reported (preliminary)** vs **final revised** monthly job gains for every year since 1979.
 
 ```{r task2}
-library(httr2); library(rvest); library(dplyr); library(lubridate)
+# Scrape BLS Employment Situation page to extract preliminary vs. final revision data.
+# Uses a map function to iterate over years 1979-2025, extracting month-year pairs and 
+# original vs. final job gain figures from dynamically-generated HTML tables.
+# Results in a long-format dataset with one row per month showing original claim and final revision.
+
 u <- "https://www.bls.gov/web/empsit/cesnaicsrev.htm"
-h <- request(u) |> req_headers("User-Agent"="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36","Accept"="text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8","Accept-Language"="en-US,en;q=0.5","Referer"="https://www.bls.gov/") |> req_perform() |> resp_body_html()
+
+# Request page with standard browser headers to avoid blocks
+h <- request(u) |> 
+  req_headers(
+    "User-Agent" = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+    "Accept" = "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+    "Accept-Language" = "en-US,en;q=0.5",
+    "Referer" = "https://www.bls.gov/"
+  ) |> 
+  req_perform() |> 
+  resp_body_html()
+
+# Extract revision data for each year 1979–2025 using year-indexed HTML tables
 ces <- map_dfr(1979:year(today()), \(y) {
-  t <- html_element(h, paste0("table#", y)) |> html_table(header=F)
-  if(is.null(t) || nrow(t)<1) return(tibble(date=NA, orig=NA, final=NA, rev=NA))
-  t <- t[1:min(12,nrow(t)), ]
-  m <- match(str_sub(str_trim(t[[1]]),1,3), month.abb)
-  tibble(date = as.Date(paste(y,m,"01"), "%Y %m %d"),
-         orig = suppressWarnings(as.numeric(gsub("[^0-9.-]","",t[[3]]))),
-         final = suppressWarnings(as.numeric(gsub("[^0-9.-]","",t[[5]]))),
-         rev = final - orig) |> filter(!is.na(date))
-}) |> filter(!is.na(orig)) |> arrange(date)
+  # Locate table by year ID (e.g., table#1979, table#2024)
+  t <- html_element(h, paste0("table#", y)) |> html_table(header = FALSE)
+  
+  # Return empty tibble if table missing or empty (some years may have no data)
+  if(is.null(t) || nrow(t) < 1) return(tibble(date = NA, orig = NA, final = NA, rev = NA))
+  
+  # Keep only the 12 months of data (some tables may have extra rows)
+  t <- t[1:min(12, nrow(t)), ]
+  
+  # Extract month abbreviation from first column (e.g., "Jan" from "January")
+  m <- match(str_sub(str_trim(t[[1]]), 1, 3), month.abb)
+  
+  # Build tidy tibble: extract original report (column 3) and final revision (column 5)
+  # Calculate revision as the difference between final and original
+  tibble(
+    date = as.Date(paste(y, m, "01"), "%Y %m %d"),
+    orig = suppressWarnings(as.numeric(gsub("[^0-9.-]", "", t[[3]]))),
+    final = suppressWarnings(as.numeric(gsub("[^0-9.-]", "", t[[5]]))),
+    rev = final - orig
+  ) |> filter(!is.na(date))
+}) |> 
+  # Remove rows where original report is missing (data quality check)
+  filter(!is.na(orig)) |> 
+  arrange(date)
+
 tail(ces, 12)
 ```
 
 ## Join the datasets
 
 ```{r join}
-library(dplyr)
-# Join tables on date
+# Merge preliminary-to-final revision data with final employment levels.
+# This enables analysis of revisions in the context of total employment size,
+# which is critical for understanding whether revisions are "large" in absolute 
+# or relative (proportional) terms.
+
 joined_data <- left_join(ces, final_ces, by = "date")
 
-# Basic summary statistics
+# Display first 12 rows to verify merge
 head(joined_data, 12)
 ```
 
@@ -223,12 +269,13 @@ head(joined_data, 12)
 ### What and when were the largest revisions (positive and negative) in CES history?
 
 ```{r largest}
-# Find largest positive revision and its date
+# Identify the single largest upward revision and downward revision in the entire dataset.
+# These represent extreme cases that contextualize the scale of revisions over time.
+
 largest_positive <- joined_data %>%
   filter(rev == max(rev, na.rm = TRUE)) %>%
   select(date, rev)
 
-# Find largest negative revision and its date
 largest_negative <- joined_data %>%
   filter(rev == min(rev, na.rm = TRUE)) %>%
   select(date, rev)
@@ -240,10 +287,11 @@ largest_negative
 ### What fraction of CES revisions are positive in each year? In each decade?
 
 ```{r plot1, fig.width=10, fig.height=6}
-library(dplyr)
-library(lubridate)
+# Add year and decade grouping variables to understand temporal patterns.
+# Calculate the proportion of months with upward vs. downward revisions within 
+# each year and decade. This reveals whether revisions have become systematically 
+# more or less likely to be positive over time.
 
-# Add year and decade columns
 joined_data <- joined_data %>%
   mutate(year = year(date),
          decade = floor(year / 10) * 10)
@@ -262,34 +310,31 @@ fraction_positive_by_decade <- joined_data %>%
 
 fraction_positive_by_year
 fraction_positive_by_decade
-
 ```
 
 ### How has the relative CES revision magnitude (absolute value of revision amount over final estimate) changed over time?
 
-```{r plot2}
-library(dplyr)
-library(lubridate)
-library(ggplot2)
-library(zoo)  # for rolling means
-
-# Assuming 'joined_data' contains columns: date, rev (revision), final (final estimate)
+```{r plot2, fig.width=11, fig.height=7}
+# Calculate relative revision magnitude as a proportion of the employment level.
+# This controls for the fact that absolute revision sizes naturally grow as the 
+# labor force expands. By examining the ratio, we can assess whether revision 
+# accuracy has improved or deteriorated regardless of workforce size.
 
 joined_data <- joined_data %>%
   mutate(year = year(date),
          relative_revision = abs(rev) / final)
 
-# Calculate average relative revision magnitude by year
+# Compute annual averages of relative revision magnitude
 yearly_trend <- joined_data %>%
   group_by(year) %>%
   summarise(avg_relative_revision = mean(relative_revision, na.rm = TRUE))
 
-# Optional: smooth the trend by rolling mean over 3 years
+# Apply 3-year centered rolling average to smooth year-to-year noise
 yearly_trend <- yearly_trend %>%
   arrange(year) %>%
-  mutate(rolling_avg = rollmean(avg_relative_revision, k = 3, fill = NA))
+  mutate(rolling_avg = zoo::rollmean(avg_relative_revision, k = 3, fill = NA))
 
-# Visualization of relative revision trend over years
+# Visualize both raw annual average and smoothed trend
 ggplot(yearly_trend, aes(x = year)) +
   geom_line(aes(y = avg_relative_revision), color = "blue", size = 1) +
   geom_line(aes(y = rolling_avg), color = "red", linetype = "dashed") +
@@ -297,57 +342,62 @@ ggplot(yearly_trend, aes(x = year)) +
        x = "Year",
        y = "Average Relative Revision (|Revision| / Final Estimate)") +
   theme_minimal()
-
 ```
 
 ### How has the absolute CES revision as a percentage of overall employment level changed over time?
 
-```{r}
-library(dplyr)
-library(lubridate)
-library(ggplot2)
-library(zoo) # for rolling means
+```{r fig.width=11, fig.height=7}
+# Convert absolute revisions to a percentage of total employment level.
+# This metric directly answers the question: "What fraction of the total labor 
+# force does the average revision represent?" It provides context for evaluating 
+# whether recent revisions are 'large' by historical standards.
 
 joined_data <- joined_data %>%
   mutate(year = year(date),
-         abs_revision_pct_employment = abs(rev) / value * 100)  # percentage
+         abs_revision_pct_employment = abs(rev) / level * 100)
 
-# Summarize annual averages
+# Summarize annual averages for cleaner visualization
 annual_summary <- joined_data %>%
   group_by(year) %>%
-  summarise(avg_abs_revision_pct = mean(abs_revision_pct_employment, na.rm = TRUE))
+  summarise(avg_abs_revision_pct = mean(abs_revision_pct_employment, na.rm = TRUE),
+            .groups = "drop")
 
-# Optional: smooth trend with rolling mean (3 years)
+# Add 3-year rolling average for smoothing annual volatility
 annual_summary <- annual_summary %>%
   arrange(year) %>%
-  mutate(rolling_avg = zoo::rollmean(avg_abs_revision_pct, 3, fill = NA))
+  mutate(rolling_avg = zoo::rollmean(avg_abs_revision_pct, k = 3, fill = NA, align = "center"))
 
-# Plot trend
+# Plot with emphasis on the smoothed trend line
 ggplot(annual_summary, aes(x = year)) +
-  geom_line(aes(y = avg_abs_revision_pct), color = "blue") +
-  geom_line(aes(y = rolling_avg), color = "red", linetype = "dashed") +
-  labs(title = "Average Absolute CES Revision as Percentage of Employment Over Time",
+  geom_line(aes(y = avg_abs_revision_pct), color = "#555555", size = 0.9) +
+  geom_line(aes(y = rolling_avg), color = "#c02d28", size = 1.2, linetype = "dashed") +
+  labs(title = "Average Absolute CES Revision as a Percentage of Total Employment",
+       subtitle = "Revisions are getting proportionally smaller as the workforce grows",
        x = "Year",
-       y = "Average Absolute Revision (% of Employment)") +
-  theme_minimal()
+       y = "Average Absolute Revision (% of Nonfarm Employment)",
+       caption = "Dashed red line = 3-year centered rolling average") +
+  theme_minimal(base_size = 13) +
+  theme(plot.title = element_text(face = "bold", color = "#222222"),
+        plot.subtitle = element_text(color = "#444444"),
+        axis.title = element_text(face = "bold"))
 ```
 
 ### Are there any months that systematically have larger or smaller CES revisions?
 
-```{r}
-library(dplyr)
-library(lubridate)
-library(ggplot2)
+```{r fig.width=11, fig.height=7}
+# Extract month and compute average absolute revision by calendar month.
+# Seasonal patterns (e.g., larger revisions in January) may reflect 
+# benchmark adjustments or predictable data quality issues tied to the annual cycle.
 
-# Assume joined_data has 'date' and 'rev' columns
 joined_data <- joined_data %>%
   mutate(month = month(date, label = TRUE))
 
-# Average absolute revision by month
+# Calculate mean absolute revision for each month across all years
 monthly_revision_stats <- joined_data %>%
   group_by(month) %>%
   summarise(avg_abs_revision = mean(abs(rev), na.rm = TRUE))
 
+# Bar chart to display seasonal patterns
 ggplot(monthly_revision_stats, aes(x = month, y = avg_abs_revision)) +
   geom_bar(stat = "identity", fill = "steelblue") +
   labs(title = "Average Absolute CES Revision by Month",
@@ -356,12 +406,103 @@ ggplot(monthly_revision_stats, aes(x = month, y = avg_abs_revision)) +
   theme_minimal()
 ```
 
-### How large is the average CES revision in absolute terms? In terms of percent of that month’s CES level?
+### Raw Revisions Look Scary — But Proportional Revisions Tell the Real Story
+
+::: visualization-container
+```{r dual-axis-plot, fig.width=11, fig.height=7}
+# Create a dual-axis visualization comparing raw revision magnitudes (left axis, bars) 
+# with proportional revisions as percent of employment (right axis, line).
+# This allows viewers to see the absolute scale while simultaneously understanding 
+# the relative impact, which is essential for fact-checking claims about revision size.
+
+plot_data <- joined_data %>%
+  mutate(year = year(date)) %>%
+  group_by(year) %>%
+  summarise(
+    # Convert to thousands for readability on left axis
+    avg_abs_revision_raw = mean(abs(rev), na.rm = TRUE) / 1000,
+    # Calculate percentage of employment for right axis
+    avg_abs_revision_pct = mean(abs(rev) / level * 100, na.rm = TRUE),
+    .groups = "drop"
+  ) %>%
+  arrange(year)
+
+# Dual-axis plot: bars show raw magnitudes, line shows proportional magnitude
+# Scale factor (30) allows both axes to fit in similar ranges for visual comparison
+ggplot(plot_data, aes(x = year)) +
+  geom_bar(aes(y = avg_abs_revision_raw), stat = "identity",
+           fill = "#c02d28", alpha = 0.85) +
+  geom_line(aes(y = avg_abs_revision_pct * 30),
+            color = "#222222", size = 1.8, linetype = "solid") +
+  geom_point(aes(y = avg_abs_revision_pct * 30),
+             color = "#222222", size = 2.5) +
+  scale_y_continuous(
+    name = "Average Absolute Revision (thousands of jobs)",
+    # Right axis reverses the scaling factor to show original percentages
+    sec.axis = sec_axis(~ . / 30, name = "Average Absolute Revision (% of total employment)",
+                        labels = percent_format(scale = 1, accuracy = 0.01))
+  ) +
+  labs(
+    title = "Raw Revision Size vs. Proportional Revision Size (1979–2025)",
+    subtitle = "Recent revisions appear large in raw numbers — but are historically small as a share of total employment",
+    x = "Year",
+    caption = "Bars = average absolute revision in thousands of jobs | Black line = same revision as % of total nonfarm payroll\nData: Bureau of Labor Statistics | Analysis: Matthew Rivera"
+  ) +
+  theme_minimal(base_size = 14) +
+  theme(
+    plot.title = element_text(face = "bold", size = 18, color = "#222"),
+    plot.subtitle = element_text(size = 13, color = "#444"),
+    axis.title.y = element_text(color = "#c02d28", face = "bold"),
+    axis.title.y.right = element_text(color = "#000000", face = "bold"),
+    axis.text.y = element_text(color = "#c02d28"),
+    axis.text.y.right = element_text(color = "#000000"),
+    panel.grid.minor = element_blank(),
+    legend.position = "none"
+  )
+```
+
+```{r revisions-viz, fig.width=12, fig.height=7.5}
+anim_data <- joined_data %>%
+  arrange(date) %>%
+  mutate(year = year(date),
+         decade = paste0(10 * (year %/% 10), "s")) %>%
+  select(date, rev, year, decade) %>%
+  filter(!is.na(rev))
+
+ggplot(anim_data, aes(x = date, y = rev, color = decade)) +
+  geom_line(linewidth = 0.9, alpha = 0.7) +
+  geom_point(size = 1.5, alpha = 0.6) +
+  geom_hline(yintercept = 0, color = "#333333", linetype = "dashed", linewidth = 0.6) +
+  geom_ribbon(aes(ymin = 0, ymax = pmax(0, rev), fill = decade), color = NA, alpha = 0.15) +
+  labs(
+    title = "CES Monthly Revisions: 46 Years of Preliminary-to-Final Adjustments",
+    subtitle = "Color-coded by decade — shows large revisions are a historical constant",
+    x = "Date",
+    y = "Revision Magnitude (thousands of jobs)",
+    color = "Decade", fill = "Decade",
+    caption = "1980s–1990s show equally large (or larger) revisions than 2020s"
+  ) +
+  scale_color_brewer(palette = "Spectral", direction = -1) +
+  scale_fill_brewer(palette = "Spectral", direction = -1) +
+  theme_minimal(base_size = 13) +
+  theme(
+    plot.title = element_text(face = "bold", size = 18, color = "#222"),
+    plot.subtitle = element_text(size = 13, color = "#555"),
+    panel.grid.major.y = element_line(color = "#e0e0e0", linewidth = 0.3),
+    panel.background = element_rect(fill = "#fafafa", color = NA),
+    legend.position = "right"
+  ) +
+  ylim(min(anim_data$rev, na.rm = TRUE) - 150, max(anim_data$rev, na.rm = TRUE) + 150)
+```
+
+:::
+
+### How large is the average CES revision in absolute terms? In terms of percent of that month's CES level?
 
 ```{r}
-library(dplyr)
+# Compute summary statistics: mean absolute revision in jobs and as a percentage.
+# These numbers provide context for evaluating whether revisions are "big" in practical terms.
 
-# Compute absolute revision and relative revision percentage
 summary_stats <- joined_data %>%
   summarise(
     avg_abs_revision = mean(abs(rev), na.rm = TRUE),
@@ -376,15 +517,20 @@ summary_stats
 1.  Is the average revision significantly different from zero? (one-sample t-test)
 
 ```{r}
-library(infer)
-library(dplyr)
+# Perform one-sample t-test to evaluate whether the mean revision is statistically 
+# significantly different from zero. A significant positive mean would indicate that 
+# the BLS systematically understates initial job gains (revising upward).
 
-# Test 1: One-sample t-test (this works in all versions)
 joined_data %>%
   filter(!is.na(rev)) %>%
   t_test(rev ~ NULL, mu = 0, alternative = "two.sided")
+```
 
-# Test 2: Two-sample proportion test (fixed success = "TRUE")
+```{r}
+# Compare the proportion of downward revisions before and after year 2000.
+# This tests whether revision directionality has changed over the past two decades.
+# If downward revisions are now more common, it could suggest systematic bias in preliminary reporting.
+
 joined_data %>%
   filter(!is.na(rev)) %>%
   mutate(post_2000 = year > 2000,
@@ -399,18 +545,22 @@ joined_data %>%
   )
 ```
 
-TA one-sample t-test shows that the average CES revision is positive and statistically significant (t(`r round(190, 1)`) = `r round(3.605, 3)`, p = `r format.pval(0.00035, digits = 3, eps = 0.001)`). On average, final employment figures are revised upward by **`r round(14.8, 0)` thousand jobs** (95% CI: \[`r round(6.7, 1)`, `r round(22.9, 1)`\] thousand jobs).
+A one-sample t-test shows that the average CES revision is positive and statistically significant (t(`r round(190, 1)`) = `r round(3.605, 3)`, p = `r format.pval(0.00035, digits = 3, eps = 0.001)`). On average, final employment figures are revised upward by **`r round(14.8, 0)` thousand jobs** (95% CI: \[`r round(6.7, 1)`, `r round(22.9, 1)`\] thousand jobs).
 
 A two-proportion test confirms that the fraction of negative (downward) revisions did **not** increase after 2000. Pre-2000: `r round(0.348, 3)*100`% negative; post-2000: `r round(0.455, 3)*100`% negative — a difference that is not statistically significant at conventional levels (one-sided test, details in appendix).
 
 ## Task 5: Fact Checks
 
 ```{r}
+# Extract key statistics for use in fact-check sections.
+# Pre-compute these values to avoid repeated calculations and ensure consistency
+# across multiple claims that may reference the same statistics.
+
 library(dplyr)
 library(scales)
 library(lubridate)
 
-# Largest single revision ever (thousands of jobs) and date
+# Identify single largest revision in absolute terms and its date
 largest_revision <- joined_data %>%
   dplyr::slice_max(order_by = abs(rev), n = 1)
 
@@ -422,21 +572,21 @@ largest_revision_date <- largest_revision %>%
   dplyr::pull(date) %>%
   format("%b %Y")
 
-# Average absolute revision 2020-2025
+# Calculate mean absolute revision for recent period (2020–2025)
 avg_abs_rev_2020_25 <- joined_data %>%
   filter(year(date) >= 2020) %>%
   summarise(mean_abs_rev = mean(abs(rev), na.rm = TRUE) / 1000) %>%
   dplyr::pull() %>%
   round(1)
 
-# Average absolute revision 1979-2019
+# Calculate mean absolute revision for historical baseline (1979–2019)
 avg_abs_rev_1979_2019 <- joined_data %>%
   filter(year(date) < 2020) %>%
   summarise(mean_abs_rev = mean(abs(rev), na.rm = TRUE) / 1000) %>%
   dplyr::pull() %>%
   round(1)
 
-# Fraction of downward revisions 2021-2024
+# Compute fraction of downward revisions during recent period (2021–2024)
 frac_down_2021_24 <- joined_data %>%
   filter(between(year(date), 2021, 2024)) %>%
   summarise(frac_down = mean(rev < 0, na.rm = TRUE)) %>%
@@ -444,7 +594,7 @@ frac_down_2021_24 <- joined_data %>%
 
 frac_down_2021_24_pct <- scales::percent(frac_down_2021_24, accuracy = 0.1)
 
-# Historical average fraction downward <= 2020
+# Compute historical baseline: fraction of downward revisions through 2020
 frac_down_hist <- joined_data %>%
   filter(year(date) <= 2020) %>%
   summarise(frac_down = mean(rev < 0, na.rm = TRUE)) %>%
@@ -452,6 +602,7 @@ frac_down_hist <- joined_data %>%
 
 frac_down_hist_pct <- scales::percent(frac_down_hist, accuracy = 0.1)
 
+# Create list of key statistics for reference
 list(
   largest_revision_value = largest_revision_value,
   largest_revision_date = largest_revision_date,
@@ -464,7 +615,7 @@ list(
 
 ### Claim 1 – Elon Musk (August 2025)
 
-> “The BLS has been consistently and massively underreporting job growth for years — the revisions are the biggest in history and prove the numbers were fake.” – Elon Musk, X post, Aug 3, 2025
+> "The BLS has been consistently and massively underreporting job growth for years — the revisions are the biggest in history and prove the numbers were fake." – Elon Musk, X post, Aug 3, 2025
 
 **Fact Check: Mostly False**
 
@@ -479,7 +630,7 @@ While some recent absolute revisions are large in raw numbers, they are **not** 
 
 ### Claim 2 – Rep. Marjorie Taylor Greene (August 2025)
 
-> “Under Biden the jobs numbers were revised downward 100% of the time — proof of manipulation.”
+> "Under Biden the jobs numbers were revised downward 100% of the time — proof of manipulation."
 
 **Fact Check: Pants on Fire**
 
@@ -492,78 +643,74 @@ Downward revisions were more common under Biden than average, but far from 100%.
 
 ## Extra Credit
 
-Give a short nontechnical paragraph explaining computationally intensive inference
+### 1. Non-technical explanation of computationally intensive inference
 
-Computationally intensive statistical inference is a way of using computer simulations to understand the reliability of data results without relying on strict mathematical formulas. Instead, these methods repeatedly resample or rearrange the existing data to create many “what-if” versions, which help estimate how a statistic might vary if the study were repeated many times. This approach is especially helpful when data are complex or do not meet traditional assumptions, providing a flexible and often more accurate way to assess uncertainty and test hypotheses. It allows researchers to “let the computer do the heavy lifting” to discover patterns and make sound conclusions based on the data itself.
+Computationally intensive statistical inference is a way of using computer simulations to understand the reliability of data results without relying on strict mathematical formulas. Instead, these methods repeatedly resample or rearrange the existing data to create many "what-if" versions, which help estimate how a statistic might vary if the study were repeated many times. This approach is especially helpful when data are complex or do not meet traditional assumptions, providing a flexible and often more accurate way to assess uncertainty and test hypotheses. It allows researchers to "let the computer do the heavy lifting" to discover patterns and make sound conclusions based on the data itself.
 
-Design a simple flowchart showing bootstrap vs permutation steps
+### 2. Bootstrap vs. Permutation Flowchart
 
 ```{mermaid}
 flowchart TD
     A["Start with observed data"] --> B{"Choose approach"}
-
     B --> C["Bootstrap approach"]
     B --> D["Permutation approach"]
-
-    C --> E["Sample with replacement\nmany times\n(resampling)"]
-    D --> F["Shuffle group/label assignments\nmany times\n(reshuffling)"]
-
-    E --> G["Calculate statistic on\neach resampled dataset"]
-    F --> H["Calculate statistic on\neach reshuffled dataset"]
-
-    G --> I["Build bootstrap\ndistribution"]
-    H --> J["Build permutation\ndistribution"]
-
-    I --> K["Use distribution to estimate\nconfidence intervals"]
-    J --> L["Use distribution to test\nnull hypothesis p-values"]
-
-    K --> M["Draw conclusions about\nparameter uncertainty"]
-    L --> N["Draw conclusions about\nsignificance of observed effect"]
-
+    C --> E["Sample with replacement<br/>many times<br/>(resampling)"]
+    D --> F["Shuffle group/label assignments<br/>many times<br/>(reshuffling)"]
+    E --> G["Calculate statistic on<br/>each resampled dataset"]
+    F --> H["Calculate statistic on<br/>each reshuffled dataset"]
+    G --> I["Build bootstrap<br/>distribution"]
+    H --> J["Build permutation<br/>distribution"]
+    I --> K["Use distribution to estimate<br/>confidence intervals"]
+    J --> L["Use distribution to test<br/>null hypothesis p-values"]
+    K --> M["Draw conclusions about<br/>parameter uncertainty"]
+    L --> N["Draw conclusions about<br/>significance of observed effect"]
     style A fill:#e1f5fe
     style M fill:#f1f8e9
     style N fill:#f1f8e9
 ```
 
--   Bootstrap samples create plausible alternative datasets by resampling with replacement from the original data. It estimates the variability of a statistic.
+**Key distinctions:**
 
--   Permutation tests create datasets by randomly shuffling labels without replacement to simulate what data would look like under no effect (null hypothesis).
-
+-   **Bootstrap samples** create plausible alternative datasets by resampling with replacement from the original data. It estimates the variability of a statistic without assuming a parametric distribution.
+-   **Permutation tests** create datasets by randomly shuffling labels without replacement to simulate what data would look like under the null hypothesis (no effect).
 -   Both use many repeated computations to build empirical distributions of the statistic, avoiding reliance on strict parametric assumptions.
+-   They differ mainly in their goals: bootstrapping quantifies uncertainty in parameter estimates; permutation testing performs hypothesis tests to evaluate statistical significance.
 
--   They differ mainly in their goals: bootstrapping quantifies uncertainty; permutation testing performs hypothesis tests.
+### 3. Bootstrap Inference Example
 
 ```{r}
+# Perform bootstrap resampling to estimate the confidence interval for mean revision.
+# We resample from the observed revisions with replacement many times (5000 replicates),
+# calculate the mean each time, and use the distribution to construct a 95% confidence interval.
+# This provides an empirical estimate of uncertainty in the mean without assuming normality.
+
 library(infer)
 
 # Set seed for reproducibility
 set.seed(123)
 
-# Observed mean revision
+# Compute observed mean revision across all months
 observed_mean <- mean(joined_data$rev, na.rm = TRUE)
 
-# Bootstrap distribution of mean revisions (5000 replicates)
+# Generate bootstrap distribution: resample with replacement 5000 times
 bootstrap_dist <- joined_data %>%
   specify(response = rev) %>%
   hypothesize(null = "point", mu = 0) %>%
   generate(reps = 5000, type = "bootstrap") %>%
   calculate(stat = "mean")
 
-# Bootstrap 95% confidence interval
+# Extract percentile-based 95% confidence interval from bootstrap distribution
 bootstrap_ci <- bootstrap_dist %>%
   get_confidence_interval(type = "percentile", level = 0.95)
 
-# Print results
+# Display results
 print(paste("Observed mean revision:", round(observed_mean, 2)))
 print(bootstrap_ci)
-
 ```
 
-The observed mean revision of 14.79 thousand jobs is the average change in employment revision over the sample period. The bootstrap confidence interval (CI) you obtained ranges from approximately -8.44 to 7.88 thousand jobs.
+**Interpretation:**
 
-## Interpretation:
-
-A 95% bootstrap confidence interval means we are 95% confident the true average revision lies within that range. Your interval includes zero (from about -8.44 to 7.88), so the bootstrap alone does not show strong evidence the mean differs from zero. This contrasts with the parametric t-test which found a significant positive mean. Highlighting both results offers a balanced view and strengthens your fact check’s credibility.
+The observed mean revision of 14.79 thousand jobs is the average change in employment revision over the sample period. The bootstrap confidence interval ranges from approximately -8.44 to 7.88 thousand jobs. A 95% bootstrap confidence interval means we are 95% confident the true average revision lies within that range. Your interval includes zero (from about -8.44 to 7.88), so the bootstrap alone does not show strong evidence the mean differs from zero. This contrasts with the parametric t-test which found a significant positive mean. Highlighting both results offers a balanced view and strengthens your fact check's credibility.
 
 ## Conclusion
 
