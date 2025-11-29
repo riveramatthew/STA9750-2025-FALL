@@ -417,7 +417,6 @@ ggplotly(p, tooltip = "text") %>%
 ```
 :::
 
-
 ### How large is the average CES revision in absolute terms? In terms of percent of that month's CES level?
 
 ```{r}
