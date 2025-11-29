@@ -1,37 +1,42 @@
-# R environment
-.Renviron
+cat > .gitignore << 'EOF'
+# Quarto rendered output — NEVER commit these
+docs/
+_site/
+*.html
+*.pdf
 
-# Generated Quarto files
-docs/*.html
-docs/site_libs/
-docs/*_files/
+# Quarto internal folders
+.quarto/
+_freeze/
+*_cache/
+*_files/
 
-# Local scripts (if not essential)
-*.Rprofile
+# Data and large files
+data/
+output/
+plots/
+cache/
+*.csv
+*.tsv
+*.xlsx
+*.zip
+*.rds
+*.json
+*.png
+*.jpg
+*.jpeg
+*.pdf
 
-.Rproj.user
+# R temporary/junk files
 .Rhistory
 .RData
 .Ruserdata
-
-**/.quarto/*
 .Rproj.user
-data/**
-**/*_cache/*
-*_files/*
-**/*_freeze/*
-**/*tsv*
-**/*csv*
-**/*xlsx*
-**/*zip
-**/*pdf
-**/*json
-**/*rds
-.DS_Store
-.Rhistory
-/.quarto/*
-**/gganim*
-/.quarto/FinalProject.html
-*.html
+*.Rproj
 
-/.quarto/
+# macOS
+.DS_Store
+
+# Quarto site libraries (regenerated on render)
+site_libs/
+EOF

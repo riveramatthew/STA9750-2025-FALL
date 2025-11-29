@@ -3,6 +3,7 @@ project:
   output-dir: docs
   render:
     - "*.qmd"
+    - "!individual_report.qmd"
     - "!FinalProject.qmd"
     
 website:
@@ -20,8 +21,6 @@ website:
       - text: "Projects"
         href: projects.qmd
         menu:
-        - text: "Mini-Project 00"
-          href: mp00.qmd
         - text: "Mini-Project 01"
           href: mp01.qmd
         - text: "Mini-Project 02"          
@@ -34,7 +33,6 @@ format:
   html:
     theme: 
       sandstone
-      custom.scss
-    toc: true
+    toc: false
 editor:
   mode: source
