@@ -4,143 +4,42 @@ author: "Matthew Rivera"
 date: "`r Sys.Date()`"
 format:
   html:
+    theme: cosmo
+    css: styles.css
     toc: true
     toc-depth: 3
+    toc-title: "Contents"
     code-fold: true
-    code-summary: "Show code"
+    code-summary: "Show the code"
     embed-resources: true
-editor: visual
+    highlight-style: github
+    sidebar:
+      style: docked          # keeps it visible but not overlapping content
+      background: "#c02d28"  # PolitiFact red
+      foreground: white
+      align: right
+      collapse-level: 2
+      contents:
+        - text: "★★★ VERDICT ★★★"
+          href: "#overall-verdict"
+        - section: "Key Claims"
+          contents:
+            - text: "Claim 1 – Trump (2024)"
+              href: "#claim-1"
+            - text: "Claim 2 – MTG (2025)"
+              href: "#claim-2"
+        - href: politifact-mostly-false.png
+        - text: "Mostly False"
+          style: "text-align:center; font-size:1.8rem; font-weight:900; margin:20px 0;"
+        - text: "Downward preliminary → final revisions have been the norm under **every** president since at least 1979."
+          style: "font-size:0.95rem; padding:0 15px;"
 execute:
   cache: true
   warning: false
   message: false
+  error: false
+editor: visual
 ---
-
-```{css}
-body {
-  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-  background-color: #ffffff;
-  color: #333333;
-  line-height: 1.65;
-  max-width: 960px;
-  margin: 0 auto;
-  padding: 2rem 1rem;
-  font-size: 1.05rem;
-}
-h1, h2, h3, h4 {
-  color: #222222;
-  font-weight: 700;
-  margin-top: 2.2rem;
-  margin-bottom: 0.9rem;
-  letter-spacing: -0.01em;
-}
-h1 {
-  font-size: 2.6rem;
-  border-bottom: 5px solid #c02d28; /* PolitiFact red underline */
-  padding-bottom: 0.5rem;
-}
-h2 {
-  font-size: 1.9rem;
-  border-bottom: 2px solid #e5e5e5;
-  padding-bottom: 0.4rem;
-  color: #c02d28; /* Red h2 like PolitiFact article subheads */
-}
-h3 {
-  font-size: 1.55rem;
-  color: #333;
-}
-/* Main fact-check / Truth-O-Meter style rating box */
-.fact-check {
-  background: #c02d28; /* PolitiFact red */
-  color: #ffffff;
-  padding: 1.4rem 1.8rem;
-  border-radius: 8px;
-  margin: 2.5rem 0;
-  font-size: 1.25rem;
-  font-weight: 700;
-  text-align: center;
-  box-shadow: 0 4px 12px rgba(192, 45, 40, 0.25);
-  border: none;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-.fact-check strong {
-  color: #ffffff;
-}
-/* Alternate rating styles (True, Mostly True, False, Pants on Fire, etc.) */
-.rating-true { background: #5ba85a; } /* Green */
-.rating-mostly-true { background: #8dc63f; }
-.rating-half-true { background: #f9b735; }
-.rating-mostly-false { background: #f7931e; }
-.rating-false { background: #ed1c24; }
-.rating-pants-fire { background: #c02d28; border: 4px solid #000; }
-/* Supporting evidence / analysis block – light gray like PolitiFact's sourced sections */
-.visualization-container {
-  background-color: #f8f8f8;
-  border: 1px solid #dddddd;
-  border-left: 6px solid #c02d28;
-  border-radius: 6px;
-  padding: 1.8rem;
-  margin: 2rem 0;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-}
-.visualization-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
-  gap: 1.8rem;
-  margin: 2rem 0;
-}
-/* Tables – PolitiFact uses simple clean tables */
-table {
-  border-collapse: collapse;
-  width: 100%;
-  margin: 1.8rem 0;
-  font-size: 0.98rem;
-}
-th {
-  background-color: #c02d28;
-  color: white;
-  padding: 0.9rem 1rem;
-  text-align: left;
-  font-weight: 600;
-}
-td {
-  padding: 0.75rem 1rem;
-  border-bottom: 1px solid #e0e0e0;
-}
-tr:nth-child(even) { background-color: #f5f5f5; }
-tr:hover { background-color: #fff0f0; }
-/* Images and plots */
-img, .plotly, figure {
-  max-width: 100%;
-  height: auto;
-  border-radius: 6px;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-  margin: 1.5rem 0;
-}
-.plot-caption {
-  font-size: 0.9rem;
-  color: #666666;
-  font-style: italic;
-  text-align: center;
-  margin-top: 0.6rem;
-}
-/* Code blocks */
-pre, code {
-  font-family: Menlo, Monaco, Consolas, "Courier New", monospace;
-  background-color: #f4f4f4;
-  border-radius: 5px;
-  font-size: 0.92rem;
-}
-pre { padding: 1rem; border: 1px solid #ddd; }
-/* Callouts – adapted to PolitiFact-style colored left borders */
-.callout-note { border-left-color: #c02d28; background-color: #fff4f4; }
-.callout-important{ border-left-color: #c02d28; background-color: #ffecec; }
-.callout-tip { border-left-color: #5ba85a; background-color: #f0f8f0; }
-/* Trend arrows keep some color but toned down */
-.trend-positive { color: #2e7d32; font-weight: 700; }
-.trend-negative { color: #c62828; font-weight: 700; }
-```
 
 ```{r setup, include=FALSE}
 # Create necessary directories for caching and data storage
@@ -150,7 +49,7 @@ if(!dir.exists(file.path("data", "mp04"))){
 
 # Load all required libraries for web scraping, data manipulation, 
 # statistical inference, visualization, and animation
-library(gt); library(readr); library(httr2); library(rvest); library(infer);
+library(gt); library(readr); library(httr2); library(rvest); library(infer); library(DT)
 library(dplyr); library(purrr); library(scales); library(lubridate); library(gganimate); library(plotly); library(tidyverse)
 
 # Set up caching directory to avoid redundant web requests and enable offline rendering
@@ -192,7 +91,9 @@ final_ces <- request("https://data.bls.gov/pdq/SurveyOutputServlet") |>
   select(date, level) |>
   arrange(date)
 
-final_ces |> slice_head(n = 10)
+final_ces |>     
+  head(n=20) |>
+  datatable(options=list(searching=FALSE, info=FALSE))
 ```
 
 **Scrape the official final (fully revised) monthly nonfarm payroll employment levels** from the BLS public data query tool. The data are returned as an HTML table, parsed, cleaned, converted to proper dates, and filtered to start in January 1979. This gives us the "true" employment level for each month after all revisions are complete.
@@ -247,7 +148,9 @@ ces <- map_dfr(1979:year(today()), \(y) {
   filter(!is.na(orig)) |> 
   arrange(date)
 
-tail(ces, 12)
+ces |>     
+  head(n=20) |>
+  datatable(options=list(searching=FALSE, info=FALSE))
 ```
 
 ## Join the datasets
@@ -261,14 +164,16 @@ tail(ces, 12)
 joined_data <- left_join(ces, final_ces, by = "date")
 
 # Display first 12 rows to verify merge
-head(joined_data, 12)
+joined_data |>     
+  head(n=20) |>
+  datatable(options=list(searching=FALSE, info=FALSE))
 ```
 
 ## Task 3: Exploration & Visualization
 
 ### What and when were the largest revisions (positive and negative) in CES history?
 
-```{r largest}
+```{r largest-revision}
 # Identify the single largest upward revision and downward revision in the entire dataset.
 # These represent extreme cases that contextualize the scale of revisions over time.
 
@@ -276,17 +181,24 @@ largest_positive <- joined_data %>%
   filter(rev == max(rev, na.rm = TRUE)) %>%
   select(date, rev)
 
+largest_positive |>     
+  head(n=20) |>
+  datatable(options=list(searching=FALSE, info=FALSE))
+```
+
+```{r}
 largest_negative <- joined_data %>%
   filter(rev == min(rev, na.rm = TRUE)) %>%
   select(date, rev)
 
-largest_positive
-largest_negative
+largest_negative |>     
+  head(n=20) |>
+  datatable(options=list(searching=FALSE, info=FALSE))
 ```
 
 ### What fraction of CES revisions are positive in each year? In each decade?
 
-```{r plot1, fig.width=10, fig.height=6}
+```{r}
 # Add year and decade grouping variables to understand temporal patterns.
 # Calculate the proportion of months with upward vs. downward revisions within 
 # each year and decade. This reveals whether revisions have become systematically 
@@ -302,14 +214,21 @@ fraction_positive_by_year <- joined_data %>%
   summarise(fraction_positive = mean(rev > 0, na.rm = TRUE)) %>%
   arrange(year)
 
+fraction_positive_by_year|>     
+  head(n=20) |>
+  datatable(options=list(searching=FALSE, info=FALSE))
+```
+
+```{r plot1}
 # Fraction of positive revisions by decade
 fraction_positive_by_decade <- joined_data %>%
   group_by(decade) %>%
   summarise(fraction_positive = mean(rev > 0, na.rm = TRUE)) %>%
   arrange(decade)
 
-fraction_positive_by_year
-fraction_positive_by_decade
+fraction_positive_by_decade |>     
+  head(n=20) |>
+  datatable(options=list(searching=FALSE, info=FALSE))
 ```
 
 ### How has the relative CES revision magnitude (absolute value of revision amount over final estimate) changed over time?
@@ -461,41 +380,43 @@ ggplot(plot_data, aes(x = year)) +
   )
 ```
 
-```{r revisions-viz, fig.width=12, fig.height=7.5}
-anim_data <- joined_data %>%
-  arrange(date) %>%
-  mutate(year = year(date),
-         decade = paste0(10 * (year %/% 10), "s")) %>%
-  select(date, rev, year, decade) %>%
-  filter(!is.na(rev))
+```{r interactive, fig.width: 11, fig.height: 7}
 
-ggplot(anim_data, aes(x = date, y = rev, color = decade)) +
-  geom_line(linewidth = 0.9, alpha = 0.7) +
-  geom_point(size = 1.5, alpha = 0.6) +
-  geom_hline(yintercept = 0, color = "#333333", linetype = "dashed", linewidth = 0.6) +
-  geom_ribbon(aes(ymin = 0, ymax = pmax(0, rev), fill = decade), color = NA, alpha = 0.15) +
-  labs(
-    title = "CES Monthly Revisions: 46 Years of Preliminary-to-Final Adjustments",
-    subtitle = "Color-coded by decade — shows large revisions are a historical constant",
-    x = "Date",
-    y = "Revision Magnitude (thousands of jobs)",
-    color = "Decade", fill = "Decade",
-    caption = "1980s–1990s show equally large (or larger) revisions than 2020s"
+library(plotly)
+
+p <- plot_data %>%
+  ggplot(aes(x = year, 
+             text = paste("Year:", year,
+                          "\nAvg |Revision|:", round(avg_abs_revision_raw, 1), "thousand jobs",
+                          "\nAs % of employment:", round(avg_abs_revision_pct, 3), "%"))) +
+  geom_col(aes(y = avg_abs_revision_raw), fill = "#c02d28", alpha = 0.9) +
+  geom_line(aes(y = avg_abs_revision_pct * 30), color = "black", size = 1.5) +
+  geom_point(aes(y = avg_abs_revision_pct * 30), color = "black", size = 2) +
+  scale_y_continuous(
+    name = "Average Absolute Revision (thousands of jobs)",
+    sec.axis = sec_axis(~ . / 30, name = "Average Absolute Revision (% of employment)",
+                        labels = percent_format(scale = 1, accuracy = 0.01))
   ) +
-  scale_color_brewer(palette = "Spectral", direction = -1) +
-  scale_fill_brewer(palette = "Spectral", direction = -1) +
+  labs(title = "Raw vs Proportional Revisions Over Time (hover for details)",
+       subtitle = "Recent revisions look scary in raw numbers — but are historically small in proportion",
+       x = "Year") +
   theme_minimal(base_size = 13) +
   theme(
-    plot.title = element_text(face = "bold", size = 18, color = "#222"),
-    plot.subtitle = element_text(size = 13, color = "#555"),
-    panel.grid.major.y = element_line(color = "#e0e0e0", linewidth = 0.3),
-    panel.background = element_rect(fill = "#fafafa", color = NA),
-    legend.position = "right"
-  ) +
-  ylim(min(anim_data$rev, na.rm = TRUE) - 150, max(anim_data$rev, na.rm = TRUE) + 150)
-```
+    axis.text.x = element_text(size = 10),   # x-axis years smaller
+    axis.text.y = element_text(size = 9),    # left y-axis numbers smaller
+    axis.text.y.right = element_text(size = 9)  # right y-axis numbers smaller
+  )
 
+ggplotly(p, tooltip = "text") %>%
+  layout(
+    yaxis2 = list(
+      title = list(text = "Average Absolute Revision (% of employment)"),
+      tickfont = list(size = 11)   # optional: make sure right axis ticks stay readable in Plotly
+    )
+  )
+```
 :::
+
 
 ### How large is the average CES revision in absolute terms? In terms of percent of that month's CES level?
 
@@ -504,9 +425,16 @@ ggplot(anim_data, aes(x = date, y = rev, color = decade)) +
 # These numbers provide context for evaluating whether revisions are "big" in practical terms.
 
 summary_stats <- joined_data %>%
+  filter(year(date) >= 1979) %>%
+  filter(!is.na(level), level > 0, !is.na(rev)) %>%   # only fully revised months
   summarise(
-    avg_abs_revision = mean(abs(rev), na.rm = TRUE),
-    avg_revision_pct_ces = mean(abs(rev) / final, na.rm = TRUE) * 100
+    avg_abs_revision     = mean(abs(rev), na.rm = TRUE),                 # in thousands of jobs
+    avg_revision_pct_ces = mean(abs(rev) / level * 100, na.rm = TRUE),   # % of final employment
+    n_months             = n()
+  ) %>%
+  mutate(
+    avg_abs_revision     = round(avg_abs_revision, 0),
+    avg_revision_pct_ces = round(avg_revision_pct_ces, 3)
   )
 
 summary_stats
@@ -601,21 +529,13 @@ frac_down_hist <- joined_data %>%
   dplyr::pull()
 
 frac_down_hist_pct <- scales::percent(frac_down_hist, accuracy = 0.1)
-
-# Create list of key statistics for reference
-list(
-  largest_revision_value = largest_revision_value,
-  largest_revision_date = largest_revision_date,
-  avg_abs_rev_2020_25 = avg_abs_rev_2020_25,
-  avg_abs_rev_1979_2019 = avg_abs_rev_1979_2019,
-  frac_down_2021_24_pct = frac_down_2021_24_pct,
-  frac_down_hist_pct = frac_down_hist_pct
-)
 ```
 
 ### Claim 1 – Elon Musk (August 2025)
-
-> "The BLS has been consistently and massively underreporting job growth for years — the revisions are the biggest in history and prove the numbers were fake." – Elon Musk, X post, Aug 3, 2025
+::: {.visualization-container style="background: linear-gradient(135deg, #FF8C42 0%, #FFB580 100%); border: 6px solid #E67E22; border-radius: 16px; padding: 28px; box-shadow: 0 12px 40px rgba(230, 130, 50, 0.25); color: #2C1A0D; font-family: system-ui, -apple-system, sans-serif; font-weight: 600; max-width: 800px; margin: 35px auto; text-align: center;"}
+### Mostly False
+"The BLS has been consistently and massively underreporting job growth for years — the revisions are the biggest in history and prove the numbers were fake." – Elon Musk, X post, Aug 3, 2025
+::: 
 
 **Fact Check: Mostly False**
 
@@ -629,8 +549,10 @@ While some recent absolute revisions are large in raw numbers, they are **not** 
 **Politifact Rating: Mostly False**
 
 ### Claim 2 – Rep. Marjorie Taylor Greene (August 2025)
-
-> "Under Biden the jobs numbers were revised downward 100% of the time — proof of manipulation."
+::: {.visualization-container style="background: linear-gradient(135deg, #E64415 0%, #FF6B35 70%); border: 6px solid #B33C00; border-radius: 12px; padding: 20px; box-shadow: 0 10px 30px rgba(230, 68, 21, 0.4);"}
+### Pants on Fire! Largest historical revisions
+"Under Biden the jobs numbers were revised downward 100% of the time — proof of manipulation."
+:::
 
 **Fact Check: Pants on Fire**
 
@@ -705,7 +627,9 @@ bootstrap_ci <- bootstrap_dist %>%
 
 # Display results
 print(paste("Observed mean revision:", round(observed_mean, 2)))
-print(bootstrap_ci)
+bootstrap_ci |>     
+  head(n=20) |>
+  datatable(options=list(searching=FALSE, info=FALSE))
 ```
 
 **Interpretation:**
@@ -717,5 +641,3 @@ The observed mean revision of 14.79 thousand jobs is the average change in emplo
 Revisions to the CES jobs report are a normal, expected, and transparent part of the statistical process. While some recent absolute revisions are among the largest in raw numbers, they are **proportionally smaller** than in previous decades due to the growth of the U.S. workforce. There is no statistical evidence of systematic bias or manipulation in the revision process.
 
 The firing of Commissioner McEntarfer appears to have been based on a misunderstanding (or misrepresentation) of standard statistical practice rather than evidence of wrongdoing.
-
-Data and code: https://github.com/yourusername/STA9750-2025-FALL
