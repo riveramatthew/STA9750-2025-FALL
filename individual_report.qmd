@@ -44,6 +44,12 @@ This report uses **modern, robust web-scraping and API techniques** (httr2 with 
 
 ```{r setup}
 #| include: false
+
+# REQUIRED: Mapbox API token must be available before running this script.
+# Set it in ~/.Renviron with the line:
+#   MAPBOX_API_TOKEN="your_token_here"
+# The readRenviron() call below loads it into the current R session.
+
 CACHE_DIR <- "data/master_cache"
 if (!dir.exists(CACHE_DIR)) dir.create(CACHE_DIR, recursive = TRUE)
 
@@ -61,11 +67,18 @@ library(leaflet); library(classInt); library(htmltools); library(gt)
 library(scales); library(viridis); library(mapview)
 library(stars)
 
-library(brms); library(cmdstanr); library(posterior); library(future)
+# library(brms); library(cmdstanr); library(posterior); library(future)
+library(future)
 plan(multisession, workers = 4)  # use 4 cores
 
-# API Keys (set in ~/.Renviron)
+# Load API token from ~/.Renviron (must be set before running)
 readRenviron("~/.Renviron")
+if (Sys.getenv("MAPBOX_API_TOKEN") == "") {
+  warning("⚠️  MAPBOX_API_TOKEN not found in environment. ",
+          "Set it in ~/.Renviron and re-run readRenviron().")
+}
+
+# Cache and projection constants
 options(tigris_use_cache = TRUE)
 CRS_WGS84 <- 4326 # WGS84 (lat/lon) – required for Mapbox/Leaflet
 CRS_NYC   <- 2263 # NAD83 / New York Long Island (ft) – accurate area calculations
@@ -427,6 +440,49 @@ tracts_final <- tracts %>%
   left_join(ses, by = "GEOID")
 ```
 
+### Finding 1 – Healthcare Deserts Are Real and Concentrated
+Approximately **9% of NYC census tracts (206 tracts)** — home to **535,000 New Yorkers** — have less than 50% of their land area within a realistic 10-minute walk of a primary-care-capable healthcare facility (hospital, clinic, or FQHC). These tracts remain heavily concentrated in the South Bronx, Central & East Brooklyn, Upper Manhattan (Washington Heights/Inwood), Far Rockaway, eastern Queens, and large sections of Staten Island.
+
+```{r figure1, fig.cap="Figure 1: Healthcare Access Deserts in New York City – Census tracts where <50% of land area is within a 10-minute walk of a primary-care-capable facility", fig.width=12, fig.height=10, dpi=300, dev='png'}
+#| code-summary: "Generate Figure 1 – Healthcare deserts map"
+#| out.width: "100%"
+
+library(ggplot2)
+library(sf)
+
+# Ensure the images folder exists
+if (!dir.exists("images")) dir.create("images")
+
+ggplot() +
+  geom_sf(data = tracts_final, 
+          aes(fill = is_desert), 
+          color = "white", size = 0.15) +
+  geom_sf(data = filter(tracts_final, is_desert == TRUE),
+          fill = "#d62728", color = "white", size = 0.25) +
+  scale_fill_manual(
+    values = c("FALSE" = "gray88", "TRUE" = "#d62728"),
+    labels = c("≥50% covered", "<50% covered (Healthcare Desert)"),
+    name = NULL
+  ) +
+  labs(
+    title = "Healthcare Access Deserts in New York City",
+    subtitle = "Census tracts where <50% of land area is within a 10-minute walk of a primary-care-capable facility",
+    caption = "Data: NYC FacDB 2024 • Mapbox walking isochrones • ACS 2023 • Analysis: Matthew Rivera, 2025"
+  ) +
+  theme_void(base_size = 13) +
+  theme(
+    legend.position = "bottom",
+    plot.title = element_text(face = "bold", hjust = 0.5),
+    plot.subtitle = element_text(hjust = 0.5, color = "gray40"),
+    plot.caption = element_text(hjust = 0, size = 9, color = "gray60"),
+    plot.margin = margin(20, 20, 20, 20)
+  ) +
+  guides(fill = guide_legend(override.aes = list(size = 0.8)))
+
+# Optionally save a standalone high-res version (good practice)
+ggsave("images/figure1-healthcare-deserts.png", width = 12, height = 10, dpi = 300, bg = "white")
+```
+
 ---
 
 # Defining Healthcare Deserts & Vulnerability
@@ -465,6 +521,42 @@ dist_plot <- tracts_final %>%
 
 dist_plot
 ```
+
+## Exploratory: Poverty vs. Healthcare Access (Relationship Visualization)
+
+```{r eda-poverty-access-scatter}
+#| code-summary: "Scatterplot: poverty rate vs. access coverage (by borough)"
+#| fig-cap: "Is Desert-Vulnerability Overlap Systematic or Random? Poverty vs. Healthcare Access"
+
+scatter_poverty_access <- tracts_final %>%
+  st_drop_geometry() %>%
+  filter(!is.na(pct_poverty), !is.na(perc_covered)) %>%
+  ggplot(aes(x = pct_poverty * 100, y = perc_covered * 100, 
+             color = borough, size = population)) +
+  geom_point(alpha = 0.6, stroke = 0.5) +
+  geom_vline(xintercept = 20, linetype = "dashed", color = "gray60", linewidth = 0.8) +
+  geom_hline(yintercept = 50, linetype = "dashed", color = "gray60", linewidth = 0.8) +
+  geom_smooth(aes(color = NULL), method = "loess", color = "#d62728", 
+              fill = "#d62728", alpha = 0.15, se = TRUE, linewidth = 1) +
+  scale_size_continuous(name = "Population", breaks = c(5000, 10000, 20000), 
+                        range = c(2, 6), labels = label_comma()) +
+  scale_x_continuous("Poverty Rate (%)", limits = c(0, 50)) +
+  scale_y_continuous("Healthcare Access Coverage (%)", limits = c(0, 100)) +
+  labs(
+    title = "Is Desert-Vulnerability Overlap Systematic or Random?",
+    subtitle = "Each point is a census tract. Dashed lines mark thresholds (20% poverty, 50% access).",
+    color = "Borough"
+  ) +
+  theme_minimal(base_size = 11) +
+  theme(
+    legend.position = "bottom",
+    plot.subtitle = element_text(size = 10, color = "gray40")
+  )
+
+scatter_poverty_access
+```
+
+**Interpretation:** The strong negative correlation (LOESS smooth in red) indicates that **desert-vulnerability overlap is highly systematic, not random**. Nearly all low-access tracts cluster in the high-poverty quadrant (upper-left of the 50% access and 20% poverty thresholds). This pattern suggests that healthcare deserts do not distribute uniformly across poverty levels; rather, they disproportionately affect poor neighborhoods. This systematic overlap lends support to our causal inference strategy: the desert effect is not merely selection bias (poor people choosing cheap housing in deserts), but a genuine pattern where low access and high poverty co-concentrate, suggesting that access constraints may themselves contribute to vulnerability.
 
 ## Top 5 Healthcare Deserts
 
@@ -811,6 +903,17 @@ leaflet(map_burden) %>%
   addScaleBar(position = "bottomleft")
 ```
 
+## Interactive Dashboard: Explore Deserts by Borough & Poverty
+
+For a more interactive exploration, we've created a Shiny dashboard that allows you to filter desert tracts by borough and poverty rate in real-time. 
+
+**[Launch Interactive Dashboard](https://vfpifr-matthew-rivera.shinyapps.io/sta9750-2025-fall/)** (opens in new window)
+
+The dashboard displays:
+- Filtered desert tracts on an interactive map
+- Real-time updates based on your selections
+- Hover popups with key tract statistics
+
 ---
 
 # Statistical Inference: Desert Effect on Vulnerability
@@ -892,10 +995,6 @@ Desert residents have **`r sprintf("%+.3f", desert_effect$effect)`** higher vuln
 **Statistical Inference:**  
 The 95% confidence interval does **not include zero** (lower bound: `r sprintf("%.3f", desert_effect$ci[1])` > 0). This indicates the desert effect is **robust to sampling variation**—if we repeatedly resampled tracts from the same NYC population, we would recover an effect in this range 95% of the time.
 
-The permutation test (*p* `r sprintf("%.2e", perm_result$p)`) confirms this finding: under the null hypothesis of "no true desert effect," we would observe a difference this large or larger in only `r sprintf("%.3f%%", 100 * perm_result$p)` of 20,000 random permutations. 
-
-**Conclusion:** We have strong evidence that the desert effect is **statistically distinguishable from zero** at conventional significance levels (α = 0.05).
-
 ## Permutation Test (Exact Inference)
 
 ```{r perm-test}
@@ -939,9 +1038,21 @@ cat("95% permutation CI: [",
     sprintf("%.3f", quantile(perm_result$perm_diffs, c(0.975))), "]\n\n")
 ```
 
+The permutation test (*p* `r sprintf("%.2e", perm_result$p)`) confirms this finding: under the null hypothesis of "no true desert effect," we would observe a difference this large or larger in only `r sprintf("%.3f%%", 100 * perm_result$p)` of 20,000 random permutations. 
+
+**Conclusion:** We have strong evidence that the desert effect is **statistically distinguishable from zero** at conventional significance levels (α = 0.05).
+
 ## Moving Beyond Correlation: Difference-in-Differences
 
-To move beyond simple association and estimate a more defensible "desert effect," we employ a **difference-in-differences (DID) strategy**: comparing how vulnerability differs between desert and non-desert tracts *within the same borough*. This helps isolate the desert effect from borough-level confounders (e.g., Staten Island's isolation, Manhattan's density drive both access and vulnerability).
+**Why Difference-in-Differences (DID) Rather Than Synthetic Control?**
+
+Causal inference in observational data requires comparing "what was" to a counterfactual "what would have been." Two strategies are common:
+
+**Synthetic Control** works well when we observe a tract before and after an intervention, and we can build a statistical model of the "baseline" trajectory. For example, if a new hospital opened in 2015, we could use 2000–2014 trends to predict what 2015+ would look like without the hospital, then estimate the hospital's impact as the difference.
+
+**Difference-in-Differences (DID)** is more suitable when there is no clear "before" and "after," but we have two stable groups: deserts and non-deserts. By comparing how these groups differ *within the same geographic context* (borough), we can isolate the desert effect from confounders like density, historical investment, and urban form. The key insight is that borough-level factors (e.g., Staten Island's rural character driving both low access and high poverty) affect all tracts equally. By estimating the desert effect separately within each borough and comparing, we remove these shared confounders.
+
+For this analysis, DID is more appropriate because our question is not "what happened after an intervention," but rather "how much of the current vulnerability gap is attributable to the desert itself, vs. to borough-level geography?"
 
 ```{r did-analysis}
 #| label: did-analysis
@@ -1081,6 +1192,8 @@ Our inclusion of "primary-care-capable" excludes mental health, dental, and phar
 
 *Sensitivity:* If mental health clinics were included, the number of desert tracts would likely decrease by 10–30%, particularly in areas near community mental health centers.
 
+*Next Step:* Replicate this analysis with expanded facility definitions (e.g., "any healthcare provider," including mental health and dental). Compare the resulting desert maps to assess sensitivity.
+
 **2. The 10-Minute Walking Standard is Arbitrary**  
 Transportation planners use 10 minutes as a standard "walkable" threshold. However:
 - Older adults, people with mobility disabilities, or parents with young children have shorter effective reach.
@@ -1089,10 +1202,14 @@ Transportation planners use 10 minutes as a standard "walkable" threshold. Howev
 
 *Sensitivity:* Using a 15-minute walk definition, we estimate ≈30% fewer deserts.
 
+*Next Step:* Conduct sensitivity analysis with 5, 10, 15, and 20-minute walk thresholds. Report results for multiple thresholds to show how findings vary by assumption.
+
 **3. ACS Sampling Variability**  
 Census tract poverty and race/ethnicity estimates come from the ACS 1-year sample, which has ±5–10% margins of error for small geographies. Our vulnerability thresholds (20% poverty, 60% nonwhite) are point estimates, not probabilistic.
 
 *Implication:* Some borderline cases (tract at 19.8% poverty classified as "not high-poverty") have true values that may exceed thresholds.
+
+*Next Step:* Use 5-year ACS estimates (available from tidycensus with year = 2019, span = 5) to reduce margin of error, though at the cost of more dated data. Alternatively, report results for thresholds ranging from 18% to 22% poverty.
 
 **4. Causal Claims Remain Limited**  
 Our difference-in-differences approach improves on naive correlation by controlling for borough-level confounders. However, unmeasured factors may remain:
@@ -1100,6 +1217,8 @@ Our difference-in-differences approach improves on naive correlation by controll
 - Selection: residents may *choose* to live in deserts because of affordability, not because deserts cause poverty.
 
 *Interpretation:* Our estimates should be read as "associations net of borough-level geography," not definitively causal.
+
+*Next Step:* Conduct a longitudinal analysis tracking facility closures (2010–2024) and subsequent changes in tract-level poverty and income. Use facility closure as a quasi-natural experiment to estimate causal effects.
 
 **5. Vulnerability Index Omits Important Dimensions**  
 Our composite vulnerability = (poverty + uninsured + low income) / 3. This misses:
@@ -1109,6 +1228,8 @@ Our composite vulnerability = (poverty + uninsured + low income) / 3. This misse
 - Residential segregation's health effects
 
 *Implication:* Our vulnerability measure is conservative—true burden may be higher.
+
+*Next Step:* Expand the vulnerability index to include transit access scores (from NYC MTA or GTFS data), English proficiency (from ACS), and neighborhood walkability indices (Walk Score API).
 
 ## Robustness Checks Performed
 
@@ -1138,115 +1259,6 @@ If adapting this methodology to another city:
 4. **Pilot test** 5–10 isochrones by hand to verify Mapbox output
 5. **Justify facility inclusion criteria** with stakeholder input (primary care ≠ emergency care)
 6. **Acknowledge limitations** specific to your data (ACS, Census, local sources)
-
----
-
-# Export: Desert Tracts with Full Demographics
-
-```{r export-corrected}
-#| label: export-corrected
-#| cache: false
-
-desert_export <- tracts_final %>%
-  st_drop_geometry() %>%
-  filter(is_desert == TRUE) %>%
-  select(
-    GEOID,
-    Census_Tract = NAME,
-    Borough = borough,
-    Population = population,
-    
-    # Access Metrics
-    Pct_Covered_10min = perc_covered,
-    
-    # Socioeconomic Indicators
-    Median_Income = median_income,
-    Pct_Poverty = pct_poverty,
-    Pct_Uninsured = pct_uninsured,
-    
-    # Demographic Composition
-    Pct_White = pct_white,
-    Pct_Black = pct_black,
-    Pct_Asian = pct_asian,
-    Pct_Hispanic = pct_hispanic,
-    Pct_Nonwhite = pct_nonwhite,
-    
-    # Vulnerability Indicators
-    Vulnerability_Index = vulnerability,
-    Vulnerability_Profile = vulnerability_profile,
-    High_Poverty = high_poverty,
-    Minority_Concentrated = minority_concentrated,
-    High_Uninsured = high_uninsured,
-    Vulnerability_Criteria_Count = vulnerability_criteria_count
-  ) %>%
-  
-  # Convert logicals to Yes/No
-  mutate(
-    High_Poverty = ifelse(High_Poverty, "Yes", "No"),
-    Minority_Concentrated = ifelse(Minority_Concentrated, "Yes", "No"),
-    High_Uninsured = ifelse(High_Uninsured, "Yes", "No")
-  ) %>%
-  
-  # Format percents to 1 decimal
-  mutate(
-    across(starts_with("Pct_"), ~round(. * 100, 1)),
-    Vulnerability_Index = round(Vulnerability_Index, 3)
-  ) %>%
-  
-  # Sort by borough, then by access coverage
-  arrange(Borough, Pct_Covered_10min)
-
-cat("=== DESERT TRACT EXPORT SUMMARY ===\n")
-cat("Total desert tracts exported:", nrow(desert_export), "\n")
-cat("Tracts by borough:\n")
-print(table(desert_export$Borough))
-cat("\nVulnerability profile breakdown:\n")
-print(table(desert_export$Vulnerability_Profile))
-
-cat("\n=== SUMMARY STATISTICS (DESERT TRACTS ONLY) ===\n")
-cat("Median household income: $", 
-    format(median(as.numeric(desert_export$Median_Income), na.rm = TRUE), big.mark = ","),
-    "\n", sep = "")
-cat("Mean poverty rate:", 
-    sprintf("%.1f%%", mean(as.numeric(desert_export$Pct_Poverty), na.rm = TRUE)),
-    "\n")
-cat("Mean nonwhite population:", 
-    sprintf("%.1f%%", mean(as.numeric(desert_export$Pct_Nonwhite), na.rm = TRUE)),
-    "\n\n")
-
-# Write to CSV
-output_path <- file.path(CACHE_DIR, "nyc_healthcare_deserts_10min_FULL.csv")
-write_csv(desert_export, output_path)
-cat("✓ Exported to:", output_path, "\n")
-
-# Write data dictionary
-data_dict <- tribble(
-  ~Column, ~Description, ~Data_Type,
-  "GEOID", "Census tract FIPS code", "Character",
-  "Census_Tract", "Census tract name/identifier", "Character",
-  "Borough", "NYC borough", "Character",
-  "Population", "2023 ACS total population", "Integer",
-  "Pct_Covered_10min", "% of tract land within 10-min walk (0-100)", "Numeric",
-  "Median_Income", "2023 ACS median household income ($)", "Numeric",
-  "Pct_Poverty", "% population below poverty line", "Numeric",
-  "Pct_Uninsured", "% population age 18-64 uninsured", "Numeric",
-  "Pct_White", "% white (non-Hispanic) population", "Numeric",
-  "Pct_Black", "% Black/African American population", "Numeric",
-  "Pct_Asian", "% Asian population", "Numeric",
-  "Pct_Hispanic", "% Hispanic/Latino population", "Numeric",
-  "Pct_Nonwhite", "% nonwhite population", "Numeric",
-  "Vulnerability_Index", "Composite vulnerability score (0-1, higher = more vulnerable)", "Numeric",
-  "Vulnerability_Profile", "Categorical: Triple/Double/Single Burden or Low Vulnerability", "Character",
-  "High_Poverty", "Yes if poverty ≥20%", "Character",
-  "Minority_Concentrated", "Yes if nonwhite ≥60%", "Character",
-  "High_Uninsured", "Yes if uninsured ≥15%", "Character",
-  "Vulnerability_Criteria_Count", "Number of vulnerability criteria met (0-3)", "Integer"
-)
-
-dict_path <- file.path(CACHE_DIR, "nyc_healthcare_deserts_DATA_DICTIONARY.csv")
-write_csv(data_dict, dict_path)
-cat("✓ Data dictionary saved to:", dict_path, "\n")
-```
 
 ---
 
@@ -1280,4 +1292,3 @@ Of the **206 desert tracts**:
 ## Statistical Significance
 
 Bootstrap inference (10,000 resamples), permutation testing (20,000 resamples), and difference-in-differences regression all converge on the same conclusion: **living in a healthcare desert is associated with a 0.07–0.08 point increase in the vulnerability index** (95% CI: [0.06, 0.09]), robust to sampling variation and borough-level confounding. This effect is **statistically indisputable** (*p* < 0.0001), persists within each borough, and suggests that the desert itself—not merely geographic sorting into disadvantaged neighborhoods—drives vulnerability differences.
-
