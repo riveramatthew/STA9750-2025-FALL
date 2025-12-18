@@ -21,7 +21,6 @@ execute:
   cache: true
 ---
 
-::: {.column-page}
 # **Executive Summary** {.unnumbered}
 
 **535,000 New Yorkers** live in one of 206 census tracts where less than half the land area is within a realistic 10-minute walk of a hospital, clinic, or FQHC. These healthcare access deserts disproportionately affect vulnerable communities, with a **systematic and statistically robust** relationship between low access and high poverty:
@@ -31,7 +30,6 @@ execute:
 - **48%** meet all three vulnerability criteria simultaneously
 
 We employ **three independent causal inference methods** (bootstrap, permutation, difference-in-differences) to quantify the desert effect net of confounding. **Key takeaway:** Healthcare deserts disproportionately burden poverty-concentrated neighborhoods, suggesting that access constraints may exacerbate inequality.
-:::
 
 
 # Research Question
@@ -629,6 +627,7 @@ boot_summary <- tibble(
   Interpretation = "Highly significant"
 )
 
+library(DT)
 datatable(boot_summary, options = list(dom = 't', paging = FALSE, ordering = FALSE), rownames = FALSE) %>%
   formatStyle("Effect", backgroundColor = "#ffe6e6", fontWeight = "bold")
 ```
@@ -793,37 +792,49 @@ controlled_effect <- coef(controlled_model)["is_desertTRUE"]
 controlled_se <- sqrt(diag(vcov(controlled_model)))["is_desertTRUE"]
 controlled_ci_lower <- controlled_effect - 1.96 * controlled_se
 controlled_ci_upper <- controlled_effect + 1.96 * controlled_se
+```
 
-robustness_results <- robustness_results %>%
-  add_row(
-    Specification = "Naive (no controls)",
-    Effect = naive_effect,
-    CI_Lower = NA_real_,
-    CI_Upper = NA_real_
-  ) %>%
-  add_row(
-    Specification = "Borough-controlled",
-    Effect = controlled_effect,
-    CI_Lower = controlled_ci_lower,
-    CI_Upper = controlled_ci_upper
-  )
+```{r}
+#| tbl-cap: "Robustness Across Specifications: Desert Effect Remains Stable"
+#| cache: true
 
-robustness_results %>%
+library(DT)
+library(dplyr)
+
+robustness_table <- robustness_results %>%
   mutate(
     Effect = round(Effect, 4),
     CI_Lower = round(CI_Lower, 4),
-    CI_Upper = round(CI_Upper, 4)
+    CI_Upper = round(CI_Upper, 4),
+    `95% CI` = ifelse(is.na(CI_Lower) | is.na(CI_Upper),
+                      "-",
+                      paste0("[", CI_Lower, ", ", CI_Upper, "]")),
+    Specification = case_when(
+      Specification == "Borough-controlled" ~ "<strong>Borough-controlled (main spec)</strong>",
+      TRUE ~ Specification
+    )
   ) %>%
-  gt() %>%
-  tab_header(
-    title = "Robustness Across Specifications",
-    subtitle = "Desert effect remains 0.06–0.08 across weighting, thresholds, and borough controls"
-  ) %>%
-  tab_style(style = cell_text(weight = "bold"), locations = cells_column_labels()) %>%
-  data_color(
-    columns = Effect,
-    colors = scales::col_numeric(palette = c("#fee8c8", "#fdbb84"), domain = NULL)
-  )
+  select(Specification, Effect, `95% CI`)
+
+datatable(robustness_table,
+          escape = FALSE,  # Allows HTML bold tag to render
+          options = list(
+            dom = 't',
+            paging = FALSE,
+            ordering = FALSE,
+            columnDefs = list(list(className = 'dt-center', targets = 1:2))
+          ),
+          rownames = FALSE,
+          caption = htmltools::tags$caption(
+            style = "caption-side: top; text-align: left; font-weight: bold;",
+            "Robustness Across Specifications: Desert tracts consistently show higher vulnerability"
+          )) %>%
+  formatStyle("Effect",
+              backgroundColor = "#ffcccc",
+              fontWeight = "bold",
+              color = "#990000") %>%
+  formatStyle("Specification",
+              fontWeight = styleEqual("<strong>Borough-controlled (main spec)</strong>", "bold"))
 ```
 
 Across all specifications—alternative vulnerability weightings, poverty thresholds, and borough controls—the desert effect remains remarkably stable at 0.06–0.08 on the 0–3 vulnerability scale. Borough controls explain less than 5% of the raw effect, confirming that geographic confounding is minimal. This consistency strongly supports the robustness of the underlying desert-vulnerability relationship.

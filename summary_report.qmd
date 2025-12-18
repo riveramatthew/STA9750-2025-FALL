@@ -22,22 +22,22 @@ execute:
 
 ## Introduction & Motivation
 
-New York City, with its vast and diverse population of over 8.4 million residents, is supported by a world-class healthcare system encompassing renowned hospitals, academic medical centers, and community clinics. However, equitable access to this system remains elusive. Residents in outer boroughs and historically under-resourced neighborhoods often struggle with timely and affordable primary care, which is crucial for preventive services, early intervention, chronic disease management, and overall public health.
+New York City, home to more than 8.4 million people from every corner of the globe, boasts one of the most advanced and extensive healthcare systems in the world. From world-renowned academic medical centers such as Mount Sinai, NYU Langone, and Columbia University Irving Medical Center to hundreds of community health centers and federally qualified health centers (FQHCs), the city offers an impressive array of services. Yet despite this abundance, equitable access to care remains a persistent challenge. Many residents—particularly those living in outer boroughs and historically under-resourced neighborhoods—face significant barriers to timely and affordable primary care.
 
-Aggregate citywide statistics, such as total hospitals or providers, frequently conceal significant neighborhood-level disparities. Healthcare is experienced locally—shaped by walking distances, public transit reliability, transportation options, and financial barriers. A facility across the city might as well be unavailable to someone facing these obstacles.
+Primary care is the foundation of a healthy population: it provides preventive services, early detection of illness, chronic disease management, and a first point of contact for most health concerns. When access is limited, small health problems can escalate into emergencies, preventable hospitalizations rise, and overall life expectancy and quality of life suffer. Aggregate citywide statistics, such as the total number of hospitals or physicians, often paint an overly optimistic picture. These figures mask dramatic neighborhood-level variation. For many New Yorkers, healthcare is experienced locally—shaped by walking distance, the reliability of public transit, availability of personal transportation, and financial constraints. A state-of-the-art hospital on the other side of the city might as well not exist for someone who cannot easily reach it.
 
-This project shifts focus to the census tract level to uncover intra-borough variations and intersecting barriers. It investigates interactions between physical proximity to facilities and socioeconomic factors, including income, insurance status, poverty, racial/ethnic composition, and foreign-born residency. Recent studies continue to highlight persistent outer-borough gaps, with initiatives like school-based mental health clinics targeting the Bronx and central Brooklyn underscoring ongoing needs.
+This project takes a more granular approach by examining access at the census-tract level—the smallest geographic unit for which detailed demographic data are available. By zooming in to this scale, we can uncover intra-borough variations and reveal how multiple barriers intersect. We explore the interplay between physical proximity to healthcare facilities and socioeconomic factors such as income, insurance coverage, poverty rates, racial/ethnic composition, and the proportion of foreign-born residents. Recent studies and policy reports continue to highlight persistent gaps in outer-borough primary care, mental health services, and specialized care. Initiatives such as the expansion of school-based health clinics in the Bronx and central Brooklyn, or the city’s efforts to increase FQHC capacity, reflect ongoing recognition of these challenges.
 
-These patterns hold policy significance, informing interventions like facility expansions, mobile units, improved transit links, and enhanced insurance enrollment. True equity demands rigorous measurement, ongoing evaluation, and targeted action.
+Understanding these patterns has clear policy relevance. Accurate measurement of where and how access is lacking can guide targeted interventions: new facility openings, mobile health units, improved transit connections, expanded insurance enrollment programs, and culturally tailored outreach. True health equity requires not just more resources, but resources allocated where they are needed most.
 
 ## The Big Question & Why It Matters
 
 **Overarching Question (OQ):**\
-How does geographic access to healthcare facilities vary across New York City at the census tract level, and what socioeconomic disparities exist in healthcare access?
+How does geographic access to healthcare facilities vary across New York City at the census-tract level, and what socioeconomic disparities exist in healthcare access?
 
-Geographic access shapes real-world care utilization, but economic and institutional barriers can override proximity. Higher-income areas may mitigate distance through mobility, while others face multiple hurdles.
+Geographic proximity is only one piece of the puzzle. Even when a clinic is nearby, economic barriers, lack of insurance, language challenges, and limited mobility can prevent people from receiving care. Higher-income residents can more easily overcome distance through taxis, rideshares, or private vehicles, while lower-income individuals may be constrained by public transit schedules or the cost of travel. Thus, access is a multidimensional phenomenon.
 
-To address this overarching question, the analysis examines healthcare access through several interconnected dimensions rather than treating access as a single metric. These dimensions include:
+To address the overarching question, we break it down into five interconnected dimensions, each led by a team member:
 
 1.  **Geographic Distribution** (Matthew): Which census tracts are true “healthcare deserts” (less than half the land area within a 10-minute walk of any facility)?
 2.  **Borough & Neighborhood Supply** (Imani): How many facilities actually exist per person in each borough and ZIP code?
@@ -45,24 +45,31 @@ To address this overarching question, the analysis examines healthcare access th
 4.  **Socioeconomic & Racial Patterns** (Zhuohan & Saoni): How strongly do poverty, race/ethnicity, and foreign-born status predict living in a low-access tract or being uninsured?
 5.  **Insurance as a Second Barrier** (Yashvi): How does lack of health insurance compound the problem of physical distance?
 
-Together, these perspectives allow for a more comprehensive understanding of healthcare access in New York City. The goal is to explain how and why they arise and to identify which factors most strongly contribute to unequal access across neighborhoods.
+By integrating these perspectives, we move beyond simplistic proximity metrics to a richer, more realistic understanding of how and why unequal access persists—and which factors exert the strongest influence.
 
 ## Data & Approach (Non-Technical)
 
-Sources comprise the NYC Facilities Database for primary care-capable sites (hospitals, diagnostic/treatment centers, FQHCs) and American Community Survey (ACS) five-year estimates for tract-level demographics: population, median income, poverty, uninsurance, race/ethnicity, and foreign-born share.
+The analysis draws on two main sources:
 
-Geographic access is modeled via 10-minute walking catchments around facilities, overlaid on census tracts to calculate coverage percentages. Per-capita metrics adjust supply for population demand. Regression and correlation analyses explore socioeconomic links. Tract-level granularity, supplemented by visualizations, exposes variations masked by borough averages and overlapping vulnerabilities..
+- **NYC Facilities Database** (maintained by the Department of Health and Mental Hygiene and the NYC Open Data portal): This provides the locations of hospitals, diagnostic and treatment centers, community health centers, FQHCs, and other sites capable of delivering primary care.
+
+- **American Community Survey (ACS)** 5-year estimates (2018–2022): Tract-level data on population, median household income, poverty rate, uninsurance rate, racial/ethnic composition, and percentage of foreign-born residents.
+
+To measure geographic access, we created 10-minute walking catchments (approximately 0.5 miles) around each facility using street-network walking time rather than straight-line distance. These catchments were overlaid onto census tracts to calculate the percentage of each tract’s land area covered. Tracts with less than 50% coverage were classified as healthcare deserts. Population-adjusted metrics (facilities per 10,000 residents) were computed at borough, ZIP code, and tract levels.
+We then used correlation analysis, linear regression, and scatterplots to explore relationships between geographic access and socioeconomic variables. Maps, bar charts, and density plots help visualize spatial patterns and overlapping vulnerabilities. The tract-level resolution reveals disparities that borough averages conceal.
 
 ## Key Findings (Integrated)
 
-Healthcare access in NYC remains markedly uneven, driven by geography, supply-demand mismatches, affordability, and indirect demographic influences.
+Healthcare access in New York City remains strikingly uneven, driven by a combination of geographic supply shortages, population growth outpacing infrastructure, affordability constraints, and indirect demographic effects.
 
-About 9% of census tracts qualify as healthcare deserts, with under 50% of land area within a 10-minute walk of primary care facilities, impacting over 500,000 residents. These cluster predominantly in the Bronx, eastern Brooklyn, and parts of Queens, while Manhattan enjoys extensive coverage (Figure 1). Recent reports affirm outer-borough under-provision in primary care and specialized services.
+**Geographic Deserts**
+Approximately 9% of census tracts—home to more than 500,000 residents—qualify as healthcare deserts (less than 50% land area within a 10-minute walk of a facility). These tracts cluster predominantly in the Bronx (especially the eastern and southern sections), eastern Brooklyn (East New York, Brownsville, Canarsie), and parts of Queens (Far Rockaway, Jamaica, and the eastern peninsula). In contrast, Manhattan exhibits near-universal coverage, and much of western Brooklyn and western Queens also fare well (see Figure 1). These patterns align with longstanding reports of outer-borough under-provision in primary care and specialty services.
 
 ![Figure 1: Healthcare Access Deserts in New York City](image1.png)\
 *Deserts concentrated in outer boroughs, aligning with ongoing disparities.*
 
-Population-adjusted metrics sharpen disparities: Manhattan boasts the highest facilities per capita, whereas Queens and Staten Island rank lowest, highlighting inadequate scaling in growing areas (Figure 2). Brooklyn leads in raw counts but lags per resident in certain neighborhoods.
+**Population-Adjusted Supply**
+When we adjust for population, the disparities become even clearer. Manhattan has the highest number of facilities per 10,000 residents, followed by Brooklyn. Queens and Staten Island rank lowest, despite rapid population growth in parts of Queens (Figure 2). Brooklyn has the highest raw number of facilities citywide, but per-capita rates in many neighborhoods fall below the city average, revealing pockets of relative scarcity.
 
 ![Figure 2: Per-Capita Healthcare Facilities by Borough](image2.png)\
 *Population adjustment exposes outer-borough shortfalls.*
@@ -73,7 +80,7 @@ Affordability emerges as a pivotal barrier. Lower-income tracts exhibit elevated
 *Affordability drives practical access.*
 
 ![Figure 4: Health Insurance Enrollment Centers by Borough](image4.png)\
-*EFewer centers in underserved boroughs.*
+*Fewer centers in undeserved boroughs.*
 
 Foreign-born residents, comprising a substantial city portion, show no robust linear correlation with provider density (per 10,000 residents). Scatterplots and regressions indicate near-zero overall relationship, though select immigrant-dense tracts overlap with low-supply areas (Figure 5). Barriers like language and cost disproportionately affect immigrants, yet proximity patterns are not directly predictive.
 
