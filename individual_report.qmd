@@ -140,7 +140,9 @@ Our filtering strategy targets:
 
 We explicitly **exclude**:
 - Dental facilities (not primary medical care)
+
 - Specialty pharmacies, radiology centers, mammography sites (diagnostic/ancillary, not primary care)
+
 - Mental health and substance abuse facilities (important but outside primary medical care scope)
 
 This filtering reflects an intentional focus on *medical* primary care—acute and preventive—rather than the full spectrum of health services. Including mental health, dental, and substance use treatment would expand desert counts by an estimated 10–30%, depending on access standards, but 
