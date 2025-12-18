@@ -1,11 +1,13 @@
 ---
 title: "Geographic Inequities in Healthcare Access Across New York City"
 author:
-    - Matthew
-    - Jason
-    - Zhuohan
-    - Saoni
-    - Imani
+  Urban Health Insight Group: 
+    Matthew, 
+    Jason, 
+    Zhuohan, 
+    Saoni, 
+    Imani, 
+    Yashvi
 date: "`r format(Sys.time(), '%B %d, %Y')`"
 format:
   html:
@@ -70,13 +72,15 @@ Taken together, the findings show that healthcare access in New York City is hig
 
 First, clear healthcare deserts exist across the city. Approximately nine percent of New York City census tracts have less than half of their land area within a ten-minute walk of a primary care-capable facility, affecting more than half a million residents. As shown in Figure 1, these deserts are not randomly distributed. They are concentrated in parts of the Bronx, eastern Brooklyn, and sections of Queens, while Manhattan is largely well-served. This spatial clustering highlights that physical proximity to care remains a meaningful barrier for many neighborhoods.
 
-![Figure 1: Healthcare Access Deserts in New York City](image1.png)\
-*Census tracts where less than 50% of the land area lies within a 10-minute walk of a primary care-capable facility. Healthcare deserts are clustered in the Bronx, eastern Brooklyn, and parts of Queens, rather than being evenly distributed across the city.*
+![Figure 1: Healthcare Access Deserts in New York City](image1.png){#fig-healthcare-deserts width="100%" fig-alt="Map showing census tracts in New York City where less than 50% of the land area lies within a 10-minute walk of a primary care-capable facility. Healthcare deserts are clustered in the Bronx, eastern Brooklyn, and parts of Queens."}
+
+*Census tracts where less than 50% of the land area lies within a 10-minute walk of a primary care-capable facility. Healthcare deserts are clustered in the Bronx, eastern Brooklyn, and parts of Queens, rather than being evenly distributed across the city.*[Link to Matthew’s individual report](docs/individual_report.html)
 
 Second, differences in healthcare access become more pronounced when population size is taken into account. Although Brooklyn has the highest number of hospitals by raw count, Manhattan has the highest number of healthcare facilities per capita. Once population is considered, Queens and Staten Island emerge as the most underserved boroughs, indicating that residents in these areas face greater competition for limited healthcare resources (Figure 2). This finding underscores the importance of population-adjusted measures, which reveal structural under-provision that simple facility counts can obscure.
 
-![Figure 2: Per-Capita Healthcare Facilities by Borough](image2.png)\
-*When population size is taken into account, Manhattan has the highest healthcare facility availability per resident, while Queens and Staten Island have the lowest. This highlights structural under-provision in outer boroughs that is obscured by raw facility counts.*
+![Figure 2: Per-Capita Healthcare Facilities by Borough](image2.png){#fig-per-capita width=100% fig-alt="Chart or map showing per-capita healthcare facilities by borough in New York City. Manhattan has the highest availability per resident, while Queens and Staten Island have the lowest."}
+
+*When population size is taken into account, Manhattan has the highest healthcare facility availability per resident, while Queens and Staten Island have the lowest. This highlights structural under-provision in outer boroughs that is obscured by raw facility counts.*[Link to Imani’s individual report](https://imani0830.github.io/STA9750-2025-FALL/IndividualReportGroupProject)
 
 Third, affordability strongly shapes practical access to care. Neighborhoods with lower median household incomes consistently exhibit higher rates of uninsured residents, limiting their ability to use healthcare services even when facilities are geographically nearby. As illustrated in Figure 3, insurance coverage serves as a critical link between geographic access and actual healthcare utilization. These disparities are further reinforced by uneven access to insurance enrollment centers, particularly in outer boroughs where both provider supply and enrollment support are more limited (Figure 4).
 
@@ -118,10 +122,4 @@ Improving affordability is equally critical. Strengthening insurance enrollment 
 
 Future research could build on this work by incorporating transit-based travel times, clinic capacity data, and healthcare utilization records to better capture how access translates into outcomes. Longitudinal analyses would also help assess whether disparities are widening or narrowing over time. By combining spatial precision with socioeconomic context, future studies can further inform targeted, equitable interventions.
 
-# Links to Detailed Individual Reports
-
--   Matthew – Geographic Distribution\
--   Imani – Borough and Per-Capita Supply\
--   Jason – Income and Affordability Barriers\
--   Zhuohan – Race, Poverty, and Access Correlations\
--   Saoni – Immigration Status and Healthcare Access
+Full repositories and code are available on each member's GitHub profile.
