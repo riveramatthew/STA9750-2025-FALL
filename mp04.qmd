@@ -531,10 +531,12 @@ frac_down_hist_pct <- scales::percent(frac_down_hist, accuracy = 0.1)
 ```
 
 ### Claim 1 – Elon Musk (August 2025)
+
 ::: {.visualization-container style="background: linear-gradient(135deg, #FF8C42 0%, #FFB580 100%); border: 6px solid #E67E22; border-radius: 16px; padding: 28px; box-shadow: 0 12px 40px rgba(230, 130, 50, 0.25); color: #2C1A0D; font-family: system-ui, -apple-system, sans-serif; font-weight: 600; max-width: 800px; margin: 35px auto; text-align: center;"}
 ### Mostly False
+
 "The BLS has been consistently and massively underreporting job growth for years — the revisions are the biggest in history and prove the numbers were fake." – Elon Musk, X post, Aug 3, 2025
-::: 
+:::
 
 **Fact Check: Mostly False**
 
@@ -548,8 +550,10 @@ While some recent absolute revisions are large in raw numbers, they are **not** 
 **Politifact Rating: Mostly False**
 
 ### Claim 2 – Rep. Marjorie Taylor Greene (August 2025)
+
 ::: {.visualization-container style="background: linear-gradient(135deg, #E64415 0%, #FF6B35 70%); border: 6px solid #B33C00; border-radius: 12px; padding: 20px; box-shadow: 0 10px 30px rgba(230, 68, 21, 0.4);"}
 ### Pants on Fire! Largest historical revisions
+
 "Under Biden the jobs numbers were revised downward 100% of the time — proof of manipulation."
 :::
 

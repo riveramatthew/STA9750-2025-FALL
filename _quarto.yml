@@ -2,9 +2,8 @@ project:
   type: website
   output-dir: docs
   render:
-    - "*.qmd"
     - "!individual_report.qmd"
-    - "!FinalProject.qmd"
+    - "!summary_report.qmd"
     
 website:
   title: "STA 9750 Portfolio"

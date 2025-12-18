@@ -1,0 +1,12 @@
+name: sta9750-2025-fall
+title:
+username: vfpifr-matthew-rivera
+account: vfpifr-matthew-rivera
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 16196435
+bundleId: 11252850
+url: https://vfpifr-matthew-rivera.shinyapps.io/sta9750-2025-fall/
+version: 1
+asMultiple: FALSE
+asStatic: FALSE
