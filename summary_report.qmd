@@ -1,13 +1,6 @@
 ---
 title: "Geographic Inequities in Healthcare Access Across New York City"
-author:
-  Urban Health Insight Group: 
-    Matthew, 
-    Jason, 
-    Zhuohan, 
-    Saoni, 
-    Imani, 
-    Yashvi
+author: "Urban Health Insight Group: Matthew, Jason, Zhuohan, Saoni, Imani, Yashvi"
 date: "`r format(Sys.time(), '%B %d, %Y')`"
 format:
   html:
@@ -50,7 +43,7 @@ To address this overarching question, the analysis examines healthcare access th
 2.  **Borough & Neighborhood Supply** (Imani): How many facilities actually exist per person in each borough and ZIP code?
 3.  **Income & Affordability** (Jason): How does household income affect the ability to obtain timely care, even when a facility is nearby?
 4.  **Socioeconomic & Racial Patterns** (Zhuohan & Saoni): How strongly do poverty, race/ethnicity, and foreign-born status predict living in a low-access tract or being uninsured?
-5.  **Insurance as a Second Barrier** (team synthesis): How does lack of health insurance compound the problem of physical distance?
+5.  **Insurance as a Second Barrier** (Yashvi): How does lack of health insurance compound the problem of physical distance?
 
 Rather than treating these dimensions as isolated measures, they are framed as complementary components of a larger story. Geographic proximity helps identify where care is physically reachable. Per-capita supply highlights whether facility concentration keeps pace with population demand. Income and insurance coverage capture whether residents can afford to use available services. Demographic characteristics, including race, ethnicity, and immigrant presence, provide context for understanding how structural inequalities shape where people live and the resources available to them.
 
